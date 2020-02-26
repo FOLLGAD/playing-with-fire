@@ -1,0 +1,22 @@
+{
+  "name": "playing-with-fire",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FOLLGAD/playing-with-fire.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/FOLLGAD/playing-with-fire/issues"
+  },
+  "homepage": "https://github.com/FOLLGAD/playing-with-fire#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
