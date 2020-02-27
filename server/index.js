@@ -65,7 +65,7 @@ const auth = express.Router()
     })
     .get('/is-authenticated', async (req, res) => {
         const cookie = req.signedCookies['session-cookie']
-        
+
         if (cookie && sessions.has(cookie)) {
             const { username } = sessions.get(cookie)
             console.log(username)
@@ -77,9 +77,13 @@ const auth = express.Router()
 
 app.use('/api', auth)
 
-
 // Statically serve the contents of /client
 app.use(express.static(path.join(__dirname, '../dist')))
+
+// For all other routes, serve the Vue frontend SPA
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/index.html'))
+})
 
 server.listen(PORT, () => {
     console.log(`Server started on port ${PORT}`)
