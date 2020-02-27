@@ -31,15 +31,22 @@ export default {
           username: this.name,
           password: this.password,
         }),
-      })
-        .then((resp) => {
-          //Still using a store?
+      }).then((resp) => {
+          if (resp.ok) return resp;
+          this.$store.commit('setIsAuthenticated', false);
+          this.failed = true;
+          this.$router.push({
+            path: 'login',
+          });
+          throw new Error(resp.text);
         })
         .then(() => {
-          //store?
+          this.$store.commit('setIsAuthenticated', true);
+          this.$router.push(`/list/${this.name}`);
         })
         .catch((error) => {
-          //store?
+          console.error('Authentication failed unexpectedly');
+          throw error;
         });
     },
   },

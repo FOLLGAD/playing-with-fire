@@ -20,7 +20,7 @@ const routes = [
 
   // Setup Authentication guard
 router.beforeEach((to, from, next) => {
-    if (((!store.state.isAuthenticated) && !(to.path === '/highscores'))) {
+    if (((!store.state.isAuthenticated) || !(to.path === '/highscores'))) {
       console.info('Unauthenticated user. Redirecting to login page.');
       next('/login');
     } else {

@@ -1,7 +1,15 @@
 <template>
-  <div id="app">
-    <h1>test</h1>
-    <router-view></router-view>
+   <div id="app">
+      <div style="text-align: center">
+        <h1>Welcome!</h1>
+            <div v-on:click="redirect('/login')">
+                Login
+            </div>
+            <div v-on:click="redirect('/highscores')">
+                Heighscores
+            </div>
+        <router-view></router-view>
+    </div>
   </div>
 </template>
 
