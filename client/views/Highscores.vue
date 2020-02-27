@@ -13,7 +13,7 @@ export default {
   name: 'Login',
   components: {},
   data: () => ({
-      list = []
+      list: []
   }),
   methods: {
       login() {
@@ -23,7 +23,7 @@ export default {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            highscores = this.list
+            highscores: this.list
         }),
       })
     },

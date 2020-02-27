@@ -10,6 +10,7 @@ const routes = [
     { path: '/game', component: GameView },
     { path: '/highscores', component: HighscoresView },
     { path: '/login', component: LoginView },
+    { path: '/', component: HighscoresView },
   ];
 
   const router = new VueRouter({

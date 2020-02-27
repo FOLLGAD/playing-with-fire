@@ -17,8 +17,8 @@ export default {
   name: 'Login',
   components: {},
   data: () => ({
-      name = '',
-      password = ''
+      name: '',
+      password: ''
   }),
   methods: {
       login() {
