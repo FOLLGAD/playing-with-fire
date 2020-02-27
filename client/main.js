@@ -5,6 +5,9 @@ document.addEventListener("keydown", movement)
 let x = 0, y = 0;
 let canvasWidth= 500, canvasHeight=500;
 let ctx;
+let gameScene = [];
+
+
 function init() {
     const canvas = document.querySelector("#game-canvas")
     canvas.width = 500
@@ -31,7 +34,7 @@ function drawBoxes(){
             for(var m = 0; m< 13; m++){
                 // Only add boxes to even columns.
                 if(m%2){
-                    ctx.fillRect(m*width, i*height, width, height);
+                    ctx.fillRect(m*height, i*width, width, height);
                 }
             }
         }
