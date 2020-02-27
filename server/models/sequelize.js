@@ -4,7 +4,10 @@ const { Sequelize } = require('sequelize')
 const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: '../../db.sqlite',
+    define: { freezeTableName: true },
 })
+
+sequelize.sync()
 
 // Export the sequelize instance
 module.exports = sequelize
