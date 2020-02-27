@@ -4,6 +4,7 @@ const express = require('express')
 const path = require('path')
 const uuid = require('uuid')
 const cookieParser = require('cookie-parser')
+const bodyParser = require('body-parser')
 
 const User = require('./models/User')
 const GameScore = require('./models/GameScore')
@@ -15,6 +16,7 @@ const PORT = 5000
 
 const app = express()
 app.use(cookieParser(process.env.cookieSecret))
+app.use(bodyParser.json())
 
 // Create HTTP server using express
 const server = http.createServer(app)
@@ -52,6 +54,7 @@ const sessions = new Map()
 // /api router
 const auth = express.Router()
     .post('/authenticate', async (req, res) => {
+        console.log(req.body)
         const { username, password } = req.body
 
         try {
@@ -59,6 +62,7 @@ const auth = express.Router()
             const newUuid = uuid.v4()
             sessions.set(newUuid, { username: foundUser.username, at: Date.now() })
             res.cookie('session-cookie', newUuid, { signed: true, httpOnly: true })
+            res.status(200).json({ username: foundUser.username })
         } catch (error) {
             res.status(401).json({})
         }
@@ -71,8 +75,21 @@ const auth = express.Router()
             console.log(username)
             return res.status(200).json({ username })
         }
-        
+
         res.status(401).json({})
+    })
+    .post('/register', async (req, res) => {
+        console.log(req.body)
+        const { username, password } = req.body
+
+        if (username.length < 5 || password.length < 5) {
+            res.status(400).json({ error: "Password or username is too short" })
+        }
+
+        const user = await User.create({ username, password })
+        console.log(user)
+
+        res.status(200).json({ username: user.username })
     })
 
 app.use('/api', auth)
