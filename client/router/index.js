@@ -26,5 +26,18 @@ const routes = [
     mode: 'history',
     routes,
   });
+<<<<<<< HEAD
+
+  // Setup Authentication guard
+router.beforeEach((to, from, next) => {
+    if (((!store.state.isAuthenticated) || !(to.path === '/highscores'))) {
+      console.info('Unauthenticated user. Redirecting to login page.');
+      next('/login');
+    } else {
+      next();
+    }
+  });
+=======
+>>>>>>> b5cc7379e1c174d25abcfc389461dc6838e0d06b
   
   export default router;
