@@ -5,6 +5,7 @@ const sequelize = new Sequelize({
     dialect: 'sqlite',
     storage: '../../db.sqlite',
     define: { freezeTableName: true },
+    logging: false, // Disable startup SQL logging
 })
 
 sequelize.sync()

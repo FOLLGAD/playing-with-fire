@@ -1,4 +1,4 @@
-const ws = require('ws')
+const WebSocket = require('ws')
 const http = require('http')
 const express = require('express')
 const path = require('path')
@@ -15,46 +15,83 @@ require('dotenv').config()
 const PORT = 5000
 
 const app = express()
-app.use(cookieParser(process.env.cookieSecret))
+const appCookieParser = cookieParser(process.env.cookieSecret)
+app.use(appCookieParser)
 app.use(bodyParser.json())
 
 // Create HTTP server using express
 const server = http.createServer(app)
 
-// Create websocket server
-const webSocketServer = new ws.Server({ server })
+const games = new Map()
 
-webSocketServer.on('connection', webSocket => {
-    webSocket.on('message', data => {
-        const message = JSON.parse(data)
-        console.log(`Message: ${message}`)
+// Create websocket server
+const wss = new WebSocket.Server({
+    server,
+    verifyClient: (info, next) => {
+        appCookieParser(info.req, {}, () => {
+            try {
+                const sc = info.req.signedCookies['session-cookie']
+
+                authenticate(sc)
+
+                next(true)
+            } catch (error) {
+                console.error(error)
+                next(false)
+            }
+        })
+    }
+})
+
+wss.on('connection', (ws, req) => {
+    const sc = req.signedCookies['session-cookie']
+    const username = authenticate(sc)
+
+    ws.on('message', data => {
+        const { type, message } = JSON.parse(data)
+        console.log(`${username} says: ${type} ${message}`)
+        if (type === 'create-game') {
+            const gameid = uuid.v4()
+            const game = new SocketGame()
+
+            game.addPlayer(new Player(ws))
+
+            games.set(gameid, game)
+        }
     })
 })
 
-const games = new Map()
-
-class Player {
-    constructor(socket, playerId) {
-        this.socket = socket
-        this.playerId = playerId
-    }
-}
-
-class SocketGame {
-    constructor() {
-        this.players = []
-    }
-    addPlayer(player) {
-        this.players.push(player)
-    }
-}
-
 const sessions = new Map()
+
+const authMiddleware = (req, res, next) => {
+    try {
+        const auth = authenticate(req.signedCookies['session-cookie'])
+        req.user = auth.username
+        next()
+    } catch (error) {
+        res.status(400).json({ error: error })
+    }
+}
+
+const authenticate = cookie => {
+    if (sessions.has(cookie)) {
+        const session = sessions.get(cookie)
+        let fiveDays = 1000 * 60 * 60 * 24 * 5
+
+        // Expires after five days
+        if (session.at + fiveDays < Date.now()) {
+            sessions.delete(cookie)
+            throw new Error("Cookie expired")
+        }
+
+        return session.username
+    }
+    throw new Error("Doesn't exist")
+}
 
 // /api router
 const auth = express.Router()
     .post('/authenticate', async (req, res) => {
-        console.log(req.body)
         const { username, password } = req.body
 
         try {
@@ -79,17 +116,18 @@ const auth = express.Router()
         res.status(401).json({})
     })
     .post('/register', async (req, res) => {
-        console.log(req.body)
         const { username, password } = req.body
 
         if (username.length < 5 || password.length < 5) {
             res.status(400).json({ error: "Password or username is too short" })
         }
 
-        const user = await User.create({ username, password })
-        console.log(user)
-
-        res.status(200).json({ username: user.username })
+        try {
+            const user = await User.create({ username, password })
+            return res.status(200).json({ username: user.username })
+        } catch (error) {
+            return res.status(400).json({})
+        }
     })
 
 app.use('/api', auth)
