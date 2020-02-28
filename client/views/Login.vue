@@ -42,7 +42,7 @@ export default {
         })
         .then(() => {
           this.$store.commit('setIsAuthenticated', true);
-          this.$router.push(`/list/${this.name}`);
+          this.$router.push(`/gameRooms`);
         })
         .catch((error) => {
           console.error('Authentication failed unexpectedly');

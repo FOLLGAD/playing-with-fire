@@ -7,7 +7,7 @@
     "start": "node server/index.js",
     "build": "vue-cli-service build client/main.js",
     "watch": "vue-cli-service build client/main.js --watch",
-    "dev": "npm run watch & nodemon server/index.js"
+    "dev": "npm run watch | nodemon server/index.js"
   },
   "repository": {
     "type": "git",
