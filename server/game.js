@@ -5,7 +5,7 @@ class Entity {
     static Types = {
         PLAYER: "PLAYER",
         WALL: "WALL",
-        CRATE: "CRATE",
+        BARREL: "BARREL",
         BOMB: "BOMB",
         POWERUP: "POWERUP",
     }
@@ -132,7 +132,8 @@ class Game {
     }
 
     tick() {
-        // Make bombs explode and stuff
+        // TODO: Make bombs explode and stuff
+        
     }
 
     // Stop playing (game ended)

@@ -26,6 +26,7 @@ const appCookieParser = cookieParser(process.env.cookieSecret)
 app.use(appCookieParser)
 app.use(bodyParser.json())
 app.use(cors({ origin: false, credentials: true }))
+const cookieOptions = { signed: true, httpOnly: true, sameSite: true }
 
 // Create HTTP server using express
 const server = http.createServer(app)
@@ -63,7 +64,6 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.on('message', message => {
-
         const { type, data } = JSON.parse(message)
 
         console.log(`${username} says: ${type} ${data}`)
@@ -128,7 +128,7 @@ const auth = express.Router()
             const foundUser = await User.findUser(username, password)
             const newUuid = uuid.v4()
             sessions.set(newUuid, { username: foundUser.username, at: Date.now() })
-            res.cookie('session-cookie', newUuid, { signed: true, httpOnly: true })
+            res.cookie('session-cookie', newUuid, cookieOptions)
             res.status(200).json({ username: foundUser.username })
         } catch (error) {
             console.error(error)
@@ -136,6 +136,7 @@ const auth = express.Router()
         }
     })
     .get('/is-authenticated', authMiddleware, async (req, res) => {
+        console.log(req.signedCookies)
         res.status(200).json({})
     })
     .post('/register', async (req, res) => {
@@ -153,7 +154,8 @@ const auth = express.Router()
         }
     })
     .get('/logout', authMiddleware, async (req, res) => {
-        res.clearCookie('session-cookie').json({})
+        res.clearCookie('session-cookie', cookieOptions)
+        res.json({})
     })
 
 app.use('/api', auth)
