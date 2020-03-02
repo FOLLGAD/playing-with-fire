@@ -8,6 +8,8 @@ export function init(canvas, scene) {
     draw();
 }
 
+// TODO: Send input to server
+
 export function render() {
     var height = canvasHeight / 11;
     var width = canvasWidth / 13;

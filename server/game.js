@@ -34,11 +34,12 @@ class Player extends Entity {
         this.bombCooldown = 3000 // 3 Seconds
         this.explodeTimer = 2000 // 2 Seconds
 
+        // TODO: Input
         // let input = {
         // 	delta: delta,
         // 	ydt: 0,
-        // 	xdt: 0,
-        // 	isn: inputNumber++,
+        //     xdt: -1,
+        //     space: true,
         // }
     }
 }

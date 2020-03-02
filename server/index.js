@@ -68,6 +68,8 @@ wss.on('connection', (ws, req) => {
 
         console.log(`${ws.username} says: ${type} ${data}`)
 
+        // TODO: Add route for game list updates (gameRoomUpdate)
+        // TODO: Leave games
         if (type === 'create-game') {
             const gameid = uuid.v4()
             const game = new Game(gameid)
