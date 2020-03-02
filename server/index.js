@@ -45,11 +45,22 @@ const wss = new WebSocket.Server({
 
 wss.on('connection', (ws, req) => {
     const sc = req.signedCookies['session-cookie']
-    const username = authenticate(sc)
+    ws.username = authenticate(sc)
 
-    ws.on('message', data => {
-        const { type, message } = JSON.parse(data)
-        console.log(`${username} says: ${type} ${message}`)
+    let currentGame = null
+    let currentPlayer = null
+
+    // Wrapper to send JSON messages with ws.sendMsg(type, data)
+    ws.sendMsg = (type, data) => {
+        ws.send(JSON.stringify({ type, data }))
+    }
+
+    ws.on('message', message => {
+
+        const { type, data } = JSON.parse(message)
+
+        console.log(`${username} says: ${type} ${data}`)
+
         if (type === 'create-game') {
             const gameid = uuid.v4()
             const game = new SocketGame()
@@ -57,6 +68,10 @@ wss.on('connection', (ws, req) => {
             game.addPlayer(new Player(ws))
 
             games.set(gameid, game)
+        } else if (type === 'join-game') {
+            if (games.has(data)) {
+                games.get(data).playerJoin(ws)
+            }
         }
     })
 })

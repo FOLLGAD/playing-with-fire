@@ -1,12 +1,7 @@
 
 class Player {
     // Username is the database's username of that player
-    constructor(socket, username) {
-        this.socket = socket
-        this.username = username
-    }
-
-    changeSocket(socket) {
+    constructor(socket) {
         this.socket = socket
     }
 }
@@ -16,6 +11,14 @@ class SocketGame {
         this.players = []
         this.entities = []
         this.entities.push(new Entity(Entity.Types.PLAYER))
+        this.interval = null
+
+        this.update = this.update.bind(this)
+    }
+
+    joinGame(socket) {
+        let player = new Player(socket)
+        this.players.push(player)
     }
 
     addPlayer(player) {
@@ -24,7 +27,11 @@ class SocketGame {
 
     // Start playing
     start() {
+        this.interval = setInterval(this.update)
+    }
 
+    update() {
+        this
     }
 
     // Stop playing (game ended)
