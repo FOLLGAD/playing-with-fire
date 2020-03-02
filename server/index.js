@@ -5,12 +5,19 @@ const path = require('path')
 const uuid = require('uuid')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
+const cors = require('cors')
 
 const User = require('./models/User')
 const GameScore = require('./models/GameScore')
 
+const { Game, Player } = require('./game')
+
 // Loads the options from the .env file into process.env.{SETTING}
 require('dotenv').config()
+
+if (!process.env.cookieSecret) {
+    throw new Error("Need a cookie secret in .env")
+}
 
 const PORT = 5000
 
@@ -18,6 +25,7 @@ const app = express()
 const appCookieParser = cookieParser(process.env.cookieSecret)
 app.use(appCookieParser)
 app.use(bodyParser.json())
+app.use(cors({ origin: false, credentials: true }))
 
 // Create HTTP server using express
 const server = http.createServer(app)
@@ -36,7 +44,6 @@ const wss = new WebSocket.Server({
 
                 next(true)
             } catch (error) {
-                console.error(error)
                 next(false)
             }
         })
@@ -63,15 +70,23 @@ wss.on('connection', (ws, req) => {
 
         if (type === 'create-game') {
             const gameid = uuid.v4()
-            const game = new SocketGame()
+            const game = new Game()
+            const player = new Player(ws)
 
-            game.addPlayer(new Player(ws))
+            game.addPlayer()
 
             games.set(gameid, game)
+
+            currentGame = game
+            currentPlayer = player
+
+            ws.send(JSON.stringify({ type: 'new-game', data: game.getData() }))
         } else if (type === 'join-game') {
             if (games.has(data)) {
                 games.get(data).playerJoin(ws)
             }
+        } else if (type === 'input') {
+            currentGame.movePlayer(currentPlayer, data)
         }
     })
 })
@@ -120,16 +135,8 @@ const auth = express.Router()
             res.status(401).json({})
         }
     })
-    .get('/is-authenticated', async (req, res) => {
-        const cookie = req.signedCookies['session-cookie']
-
-        if (cookie && sessions.has(cookie)) {
-            const { username } = sessions.get(cookie)
-            console.log(username)
-            return res.status(200).json({ username })
-        }
-
-        res.status(401).json({})
+    .get('/is-authenticated', authMiddleware, async (req, res) => {
+        res.status(200).json({})
     })
     .post('/register', async (req, res) => {
         const { username, password } = req.body
@@ -144,6 +151,9 @@ const auth = express.Router()
         } catch (error) {
             return res.status(400).json({})
         }
+    })
+    .get('/logout', authMiddleware, async (req, res) => {
+        res.clearCookie('session-cookie').json({})
     })
 
 app.use('/api', auth)

@@ -17,7 +17,7 @@ class User extends Model {
                 return user
             }
         }
-        
+
         throw new Error("User not found")
     }
 }
