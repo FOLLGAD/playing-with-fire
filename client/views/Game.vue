@@ -10,7 +10,7 @@ export default {
     name: 'Booking',
     components: {},
     data: () => ({
-        players = 0,
+        players: 0,
   }),
     methods: {
   },

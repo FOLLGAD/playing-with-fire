@@ -14,6 +14,12 @@ export default new Vuex.Store({
     },
   },
   actions: {
+    logout({ commit, $router }) {
+      return fetch('/api/logout')
+        .finally(() => {
+          return commit('setIsAuthenticated', false)
+        })
+    }
   },
   modules: {
   },
