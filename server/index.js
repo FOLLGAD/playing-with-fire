@@ -116,6 +116,7 @@ const auth = express.Router()
             res.cookie('session-cookie', newUuid, { signed: true, httpOnly: true })
             res.status(200).json({ username: foundUser.username })
         } catch (error) {
+            console.error(error)
             res.status(401).json({})
         }
     })

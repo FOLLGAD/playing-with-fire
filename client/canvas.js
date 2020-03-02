@@ -1,15 +1,6 @@
-document.addEventListener("DOMContentLoaded", init)
+function init(canvas) {
+    document.addEventListener("keydown", movement)
 
-document.addEventListener("keydown", movement)
-
-let x = 0, y = 0;
-let canvasWidth= 500, canvasHeight=500;
-let ctx;
-let gameScene = [];
-
-
-function init() {
-    const canvas = document.querySelector("#game-canvas")
     canvas.width = 500
     canvas.height = 500
 
@@ -19,22 +10,23 @@ function init() {
         //x++
         //y++
     }, 10)
-    
+
     draw();
 }
 
-function drawBoxes(){
-    var height = canvasHeight/11;
-    var width = canvasWidth/13;
+
+function drawBoxes() {
+    var height = canvasHeight / 11;
+    var width = canvasWidth / 13;
     //We want eleven box-areas in height.
-    for(var i = 0; i<11; i++){
+    for (var i = 0; i < 11; i++) {
         // Only add boxes to even rows.
-        if(i%2){
+        if (i % 2) {
             //We want thirteen box-areas in width.
-            for(var m = 0; m< 13; m++){
+            for (var m = 0; m < 13; m++) {
                 // Only add boxes to even columns.
-                if(m%2){
-                    ctx.fillRect(m*height, i*width, width, height);
+                if (m % 2) {
+                    ctx.fillRect(m * height, i * width, width, height);
                 }
             }
         }
@@ -44,19 +36,25 @@ function drawBoxes(){
 function draw() {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
     drawBoxes();
-    ctx.rect(0,0,canvasWidth,canvasHeight)
+    ctx.rect(0, 0, canvasWidth, canvasHeight)
     ctx.fillRect(x, y, 50, 50);
     window.requestAnimationFrame(draw)
 }
 
-function movement(e){
-    if(e.keyCode == '37'){
+function movement(e) {
+    if (e.keyCode == '37') {
         x -= 10;
-    }else if(e.keyCode == '38'){
+    } else if (e.keyCode == '38') {
         y -= 10;
-    }else if(e.keyCode == '39'){
+    } else if (e.keyCode == '39') {
         x += 10;
-    }else if(e.keyCode == '40'){
-        y +=10;
+    } else if (e.keyCode == '40') {
+        y += 10;
     }
 }
+let x = 0, y = 0;
+let canvasWidth = 500, canvasHeight = 500;
+let ctx;
+let gameScene = [];
+
+export default init;

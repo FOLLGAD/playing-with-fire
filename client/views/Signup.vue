@@ -36,12 +36,14 @@ export default {
         }),
       })
         .then((resp) => {
+        console.log(resp);
         if (resp.ok){
             this.$router.push('/login');
         }else{
             this.failed = true
-            console.log(resp);
-            this.error = resp.dataerror
+            resp.json().then(data => {
+               this.error = data.error
+            });
         }
         })
         .catch((error) => {

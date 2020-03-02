@@ -6,7 +6,10 @@
                 Login
             </div>
             <div v-on:click="redirect('/highscores')">
-                Heighscores
+                Highscores
+            </div>
+            <div v-on:click="redirect('/signup')">
+                Signup
             </div>
         <router-view></router-view>
     </div>

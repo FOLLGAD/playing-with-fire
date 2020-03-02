@@ -1,6 +1,6 @@
 <template>
    <div>
-       <gameCanvas></gameCanvas>
+       <canvas ref="gamecanvas"></canvas>
   </div>
 </template>
 
@@ -10,14 +10,16 @@ export default {
     name: 'Booking',
     components: {},
     data: () => ({
+        players = 0,
   }),
     methods: {
-    redirect(target) {
-      this.$router.push(target);
-    },
   },
     mounted() { 
-    
+        let r = this.$refs.gamecanvas
+        gameCanvas(r)
+    },
+    created(){
+        
     },
 };
 </script>
