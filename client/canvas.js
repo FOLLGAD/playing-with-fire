@@ -1,60 +1,83 @@
-function init(canvas) {
-    document.addEventListener("keydown", movement)
+export function init(canvas, scene) {
 
     canvas.width = 500
     canvas.height = 500
 
     ctx = canvas.getContext("2d")
-
-    setInterval(() => {
-        //x++
-        //y++
-    }, 10)
+    gameScene = scene;
 
     draw();
 }
 
-
-function drawBoxes() {
+export function render() {
     var height = canvasHeight / 11;
     var width = canvasWidth / 13;
-    //We want eleven box-areas in height.
-    for (var i = 0; i < 11; i++) {
-        // Only add boxes to even rows.
-        if (i % 2) {
-            //We want thirteen box-areas in width.
-            for (var m = 0; m < 13; m++) {
-                // Only add boxes to even columns.
-                if (m % 2) {
-                    ctx.fillRect(m * height, i * width, width, height);
+
+    gameScene.forEach(function (arrayItem) {
+        var type = arrayItem.type;
+        var position = arrayItem.pos;
+        var base_image = new Image()
+        switch (type) {
+            case "TILE":
+                base_image.onload = function(){
+                ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
                 }
-            }
+                base_image.src = 'assets/tile.PNG';
+                break;
+            case "BARREL":
+                base_image.onload = function(){
+                    ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
+                    }
+                base_image.src = 'assets/barrel.PNG';
+                ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
+                break;
+            case "PLAYER":
+                ctx.fillStyle = "#FFFFFF";
+                ctx.fillRect(height * position.x, width * position.y, width, height);
+                break;
+            default:
+                console.error("unkown type");
+
         }
-    }
+    });
 }
+
+export function updateObjects(objects) {
+    gameScene.forEach(g => {
+        objects.forEach(d => {
+            if (g.id == d.id) {
+                Object.assign(g, d)
+            }
+        })
+    })
+    draw()
+}
+
+export function removeObjects(objects) {
+        objects.forEach(d => {
+            gameScene.splice(d.id, 1)
+        })
+    draw()
+}
+
+
+export function initializeMap(scene){
+    gameScene = scene;
+}
+
 
 function draw() {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-    drawBoxes();
-    ctx.rect(0, 0, canvasWidth, canvasHeight)
-    ctx.fillRect(x, y, 50, 50);
+    var base_image = new Image()
+    base_image.onload = function(){
+        ctx.drawImage(base_image, 0, 0, canvasWidth, canvasHeight);
+        }
+    base_image.src = 'assets/barrel.PNG';
+    render();
     window.requestAnimationFrame(draw)
 }
 
-function movement(e) {
-    if (e.keyCode == '37') {
-        x -= 10;
-    } else if (e.keyCode == '38') {
-        y -= 10;
-    } else if (e.keyCode == '39') {
-        x += 10;
-    } else if (e.keyCode == '40') {
-        y += 10;
-    }
-}
-let x = 0, y = 0;
+
 let canvasWidth = 500, canvasHeight = 500;
 let ctx;
 let gameScene = [];
-
-export default init;

@@ -10,16 +10,31 @@ export default {
     name: 'Booking',
     components: {},
     data: () => ({
-        players = 0,
+        gameCanvas : this.$refs.gamecanvas,
+        socket : ''
   }),
     methods: {
   },
     mounted() { 
-        let r = this.$refs.gamecanvas
-        gameCanvas(r)
+        this.socket.on('update', (gamelogic) => {
+        // make game-canvas takes in the game logic using gamelogic
+
+        this.gameCanvas.updateObjects(gamelogic)
+      });
+      this.socket.on('remove', (gamelogic) => {
+        // make game-canvas takes in the game logic using gamelogic
+        this.gameCanvas.remove(gamelogic)
+      });
     },
     created(){
-        
+      let r = this.$refs.gamecanvas
+      this.socket = this.$root.socket;
+      fetch('/api/game')
+        .then(res => res.json())
+        .then((data) => {
+            this.gameCanvas.init(r, data.gameScene)
+        })
+        .catch(console.error);
     },
 };
 </script>
