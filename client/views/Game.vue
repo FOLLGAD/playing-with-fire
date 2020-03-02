@@ -10,12 +10,8 @@ export default {
     name: 'Booking',
     components: {},
     data: () => ({
-<<<<<<< HEAD
-        players: 0,
-=======
         gameCanvas : this.$refs.gamecanvas,
         socket : ''
->>>>>>> 3646ce1778f3153afb4a3b0e435bd041f4252849
   }),
     methods: {
   },
