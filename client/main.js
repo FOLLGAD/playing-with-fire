@@ -4,21 +4,26 @@ import router from './router';
 import store from './store';
 import './style.css'
 
-const socket = new WebSocket(`ws://${window.location.host}/api`)
-
+// Simple wrapper around the native WebSocket
 class Socket {
-  constructor(socket) {
+  constructor() {
     this.listeners = {}
+  }
+  setSocket(socket) {
     this.socket = socket
-    socket.onmessage = (msg) => {
-      let { type, data } = JSON.parse(msg)
+    this.socket.onmessage = (msg) => {
+      let { type, data } = JSON.parse(msg.data)
       if (this.listeners[type]) {
         this.listeners[type](data)
       }
     }
   }
   on(type, fn) {
+    console.log(type)
     this.listeners[type] = fn
+  }
+  send(type, data) {
+    return this.socket.send(JSON.stringify({ type, data }))
   }
 }
 
@@ -36,8 +41,14 @@ Vue.config.productionTip = false;
     router,
     store,
     render: h => h(App),
+    methods: {
+      connectSocket() {
+        let socket = new WebSocket(`ws://${window.location.host}/api`)
+        this.socket.setSocket(socket)
+      }
+    },
     data: {
-      socket: new Socket(socket),
+      socket: new Socket(),
     },
   }).$mount('#app');
 })();

@@ -6,6 +6,7 @@
       <div v-if="!isAuthed" v-on:click="redirect('/signup')">Signup</div>
       <div v-if="isAuthed" @click="logoutRedirect">Log out</div>
       <div v-on:click="redirect('/highscores')">Highscores</div>
+      <div v-if="isAuthed" v-on:click="redirect('/gamerooms')">Game rooms</div>
       <router-view></router-view>
     </div>
   </div>

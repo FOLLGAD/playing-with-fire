@@ -1,5 +1,4 @@
 export function init(canvas, scene) {
-
     canvas.width = 500
     canvas.height = 500
 
@@ -36,7 +35,7 @@ export function render() {
                 ctx.fillRect(height * position.x, width * position.y, width, height);
                 break;
             default:
-                console.error("unkown type");
+                console.error("unkown type", type);
 
         }
     });

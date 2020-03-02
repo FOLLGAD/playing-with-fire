@@ -18,7 +18,7 @@ class Entity {
         this.height = TILESIZE
     }
     getData() {
-        return JSON.stringify({ type: this.type, pos: this.pos, id: this.id })
+        return { type: this.type, pos: this.pos, id: this.id }
     }
 }
 
@@ -66,10 +66,11 @@ class Powerup extends Entity {
 }
 
 class Game {
-    constructor() {
+    constructor(gameid) {
         this.sockets = []
         this.entities = []
         this.idCounter = 10
+        this.id = gameid
         this.entities = [
             new Wall({ id: this.idCounter++, pos: { x: 2, y: 4 } }),
             new Wall({ id: this.idCounter++, pos: { x: 4, y: 4 } }),
@@ -78,13 +79,13 @@ class Game {
         ]
         this.interval = null
 
-        this.update = this.update.bind(this)
+        this.tick = this.tick.bind(this)
     }
 
     joinGame(socket) {
         let player = new Player(this.idCounter, socket)
         this.idCounter++
-        this.players.push(player)
+        this.entities.push(player)
     }
 
     leaveGame(socket) {
@@ -99,7 +100,7 @@ class Game {
 
     // Start playing
     start() {
-        this.interval = setInterval(this.update)
+        this.interval = setInterval(this.tick)
     }
 
     movePlayer(player, { delta, xdt, ydt }) {

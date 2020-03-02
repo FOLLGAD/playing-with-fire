@@ -11,9 +11,9 @@ import store from '../store'
 Vue.use(VueRouter);
 
 const authGuard = (to, from, next) => {
-//   if (!store.state.isAuthenticated) {
-//     return next("/login")
-//   }
+  if (!store.state.isAuthenticated) {
+    return next("/login")
+  }
   next();
 }
 
