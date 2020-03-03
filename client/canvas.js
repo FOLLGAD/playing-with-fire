@@ -1,10 +1,9 @@
 export function init(canvas, scene) {
     canvas.width = 500
     canvas.height = 500
-
+    console.log("DID I START?")
     ctx = canvas.getContext("2d")
     gameScene = scene;
-
     draw();
 }
 
@@ -19,7 +18,8 @@ export function render() {
         var position = arrayItem.pos;
         var base_image = new Image()
         switch (type) {
-            case "TILE":
+            case "WALL":
+                console.log(" DO I FIND THE WALL?")
                 base_image.onload = function(){
                 ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
                 }
@@ -33,8 +33,16 @@ export function render() {
                 ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
                 break;
             case "PLAYER":
+                console.log(" DO I FIND THE PLAYER?")
                 ctx.fillStyle = "#FFFFFF";
                 ctx.fillRect(height * position.x, width * position.y, width, height);
+                break;
+            case "BOMB":
+                base_image.onload = function(){
+                    ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
+                    }
+                base_image.src = 'assets/bomb.PNG';
+                ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
                 break;
             default:
                 console.error("unkown type", type);
@@ -67,7 +75,7 @@ export function initializeMap(scene){
 }
 
 
-function draw() {
+export function draw() {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
     var base_image = new Image()
     base_image.onload = function(){
@@ -75,6 +83,7 @@ function draw() {
         }
     base_image.src = 'assets/barrel.PNG';
     render();
+    ctx.fillRect(0 ,0 ,10 ,10)
     window.requestAnimationFrame(draw)
 }
 

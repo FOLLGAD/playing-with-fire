@@ -18,6 +18,7 @@ export default {
     let r = this.$refs.gamecanvas;
     this.gameCanvas = r;
     this.socket = this.$root.socket;
+    this.gameCanvas.draw();
 
     this.socket.on("update", gamelogic => {
       // make game-canvas takes in the game logic using gamelogic
