@@ -27,14 +27,7 @@ export default {
       });
     },
     created(){
-      let r = this.$refs.gamecanvas
       this.socket = this.$root.socket;
-      fetch('/api/game')
-        .then(res => res.json())
-        .then((data) => {
-            this.gameCanvas.init(r, data.gameScene)
-        })
-        .catch(console.error);
     },
 };
 </script>
