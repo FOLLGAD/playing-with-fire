@@ -3,7 +3,7 @@ import VueRouter from 'vue-router';
 import LoginView from '../views/Login.vue';
 import HighscoresView from '../views/Highscores.vue';
 import GameView from '../views/Game.vue';
-import gameRoomsView from '../views/gameRooms.vue';
+import gameRoomsView from '../views/GameRooms.vue';
 import SignupView from '../views/Signup.vue';
 import Error404 from '../views/404.vue';
 import store from '../store'

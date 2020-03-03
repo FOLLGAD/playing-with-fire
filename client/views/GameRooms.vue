@@ -34,8 +34,16 @@ export default {
     }
   },
   mounted() {
-    this.$root.socket.on("gameRoomUpdate", gameRooms => {
-      this.games = gameRooms;
+    this.$root.socket.on("update-gamelist", gameRooms => {
+      console.log("Updating", gameRooms)
+      gameRooms.forEach(g_new => {
+        let g_old = this.games.find(g => g.id === g_new.id)
+        if (g_old) {
+          Object.assign(g_old, g_new)
+        } else {
+          this.games.push(g_new)
+        }
+      })
     });
   },
   created() {
