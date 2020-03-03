@@ -26,6 +26,7 @@ const appCookieParser = cookieParser(process.env.cookieSecret)
 app.use(appCookieParser)
 app.use(bodyParser.json())
 app.use(cors({ origin: false, credentials: true }))
+const cookieOptions = { signed: true, httpOnly: true, sameSite: true }
 
 // Create HTTP server using express
 const server = http.createServer(app)
@@ -63,17 +64,18 @@ wss.on('connection', (ws, req) => {
     }
 
     ws.on('message', message => {
-
         const { type, data } = JSON.parse(message)
 
-        console.log(`${username} says: ${type} ${data}`)
+        console.log(`${ws.username} says: ${type} ${data}`)
 
+        // TODO: Add route for game list updates (gameRoomUpdate)
+        // TODO: Leave games
         if (type === 'create-game') {
             const gameid = uuid.v4()
-            const game = new Game()
+            const game = new Game(gameid)
             const player = new Player(ws)
 
-            game.addPlayer()
+            game.joinGame(ws)
 
             games.set(gameid, game)
 
@@ -81,9 +83,13 @@ wss.on('connection', (ws, req) => {
             currentPlayer = player
 
             ws.send(JSON.stringify({ type: 'new-game', data: game.getData() }))
+            console.log(JSON.stringify({ type: 'new-game', data: game.getData() }))
         } else if (type === 'join-game') {
             if (games.has(data)) {
-                games.get(data).playerJoin(ws)
+                let g = games.get(data)
+                g.joinGame(ws)
+                currentGame = g
+                ws.send(JSON.stringify({ type: 'new-game', data: g.getData() }))
             }
         } else if (type === 'input') {
             currentGame.movePlayer(currentPlayer, data)
@@ -128,7 +134,7 @@ const auth = express.Router()
             const foundUser = await User.findUser(username, password)
             const newUuid = uuid.v4()
             sessions.set(newUuid, { username: foundUser.username, at: Date.now() })
-            res.cookie('session-cookie', newUuid, { signed: true, httpOnly: true })
+            res.cookie('session-cookie', newUuid, cookieOptions)
             res.status(200).json({ username: foundUser.username })
         } catch (error) {
             console.error(error)
@@ -136,6 +142,7 @@ const auth = express.Router()
         }
     })
     .get('/is-authenticated', authMiddleware, async (req, res) => {
+        console.log(req.signedCookies)
         res.status(200).json({})
     })
     .post('/register', async (req, res) => {
@@ -153,7 +160,12 @@ const auth = express.Router()
         }
     })
     .get('/logout', authMiddleware, async (req, res) => {
-        res.clearCookie('session-cookie').json({})
+        res.clearCookie('session-cookie', cookieOptions)
+        res.json({})
+    })
+    .get('/games', authMiddleware, async (req, res) => {
+        console.log(games)
+        res.status(200).json({ list: Array.from(games.values()) })
     })
 
 app.use('/api', auth)

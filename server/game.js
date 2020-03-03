@@ -5,7 +5,7 @@ class Entity {
     static Types = {
         PLAYER: "PLAYER",
         WALL: "WALL",
-        CRATE: "CRATE",
+        BARREL: "BARREL",
         BOMB: "BOMB",
         POWERUP: "POWERUP",
     }
@@ -18,7 +18,7 @@ class Entity {
         this.height = TILESIZE
     }
     getData() {
-        return JSON.stringify({ type: this.type, pos: this.pos, id: this.id })
+        return { type: this.type, pos: this.pos, id: this.id }
     }
 }
 
@@ -34,11 +34,12 @@ class Player extends Entity {
         this.bombCooldown = 3000 // 3 Seconds
         this.explodeTimer = 2000 // 2 Seconds
 
+        // TODO: Input
         // let input = {
         // 	delta: delta,
         // 	ydt: 0,
-        // 	xdt: 0,
-        // 	isn: inputNumber++,
+        //     xdt: -1,
+        //     space: true,
         // }
     }
 }
@@ -66,10 +67,11 @@ class Powerup extends Entity {
 }
 
 class Game {
-    constructor() {
+    constructor(gameid) {
         this.sockets = []
         this.entities = []
         this.idCounter = 10
+        this.id = gameid
         this.entities = [
             new Wall({ id: this.idCounter++, pos: { x: 2, y: 4 } }),
             new Wall({ id: this.idCounter++, pos: { x: 4, y: 4 } }),
@@ -78,13 +80,13 @@ class Game {
         ]
         this.interval = null
 
-        this.update = this.update.bind(this)
+        this.tick = this.tick.bind(this)
     }
 
     joinGame(socket) {
         let player = new Player(this.idCounter, socket)
         this.idCounter++
-        this.players.push(player)
+        this.entities.push(player)
     }
 
     leaveGame(socket) {
@@ -99,7 +101,7 @@ class Game {
 
     // Start playing
     start() {
-        this.interval = setInterval(this.update)
+        this.interval = setInterval(this.tick)
     }
 
     movePlayer(player, { delta, xdt, ydt }) {
@@ -132,7 +134,8 @@ class Game {
     }
 
     tick() {
-        // Make bombs explode and stuff
+        // TODO: Make bombs explode and stuff
+        
     }
 
     // Stop playing (game ended)

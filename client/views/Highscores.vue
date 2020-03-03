@@ -1,33 +1,19 @@
 <template>
-    <div style="text-align: center">
-    <link rel="stylesheet" type="text/css" href="./style.css">
-            <div v-for="score in list" :key="score.id">
-                <span>
-                    {{}}
-                </span>
-            </div>
+  <div style="text-align: center">
+      <span>test</span>
+    <div v-for="score in list" :key="score.id">
     </div>
+  </div>
 </template>
 
 <script>
 export default {
-  name: 'Login',
+  name: "Highscores",
   components: {},
   data: () => ({
-      list: []
+    list: []
   }),
   methods: {
-      login() {
-      fetch('/api/highscore', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            highscores: this.list
-        }),
-      })
-    },
-  },
+  }
 };
 </script>

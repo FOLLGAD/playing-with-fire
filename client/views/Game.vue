@@ -1,33 +1,39 @@
 <template>
-   <div>
-       <canvas ref="gamecanvas"></canvas>
+  <div>
+    <canvas ref="gamecanvas"></canvas>
   </div>
 </template>
 
 <script>
-import gameCanvas from '../canvas.js';
+import { init, removeObjects, updateObjects } from "../canvas.js";
 export default {
-    name: 'Booking',
-    components: {},
-    data: () => ({
-        gameCanvas : this.$refs.gamecanvas,
-        socket : ''
+  name: "Game",
+  components: {},
+  data: () => ({
+    gameCanvas: null,
+    socket: null
   }),
-    methods: {
-  },
-    mounted() { 
-        this.socket.on('update', (gamelogic) => {
-        // make game-canvas takes in the game logic using gamelogic
+  methods: {},
+  mounted() {
+    let r = this.$refs.gamecanvas;
+    this.gameCanvas = r;
+    this.socket = this.$root.socket;
 
-        this.gameCanvas.updateObjects(gamelogic)
-      });
-      this.socket.on('remove', (gamelogic) => {
-        // make game-canvas takes in the game logic using gamelogic
-        this.gameCanvas.remove(gamelogic)
-      });
-    },
-    created(){
-      this.socket = this.$root.socket;
-    },
+    this.socket.on("update", gamelogic => {
+      // make game-canvas takes in the game logic using gamelogic
+
+      updateObjects(gamelogic);
+    });
+    this.socket.on("remove", gamelogic => {
+      // make game-canvas takes in the game logic using gamelogic
+      remove(gamelogic);
+    });
+
+    this.socket.on("new-game", data => {
+      console.log("new game data", data);
+      init(r, data.entities);
+    });
+  },
+  created() {}
 };
 </script>

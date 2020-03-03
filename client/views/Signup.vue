@@ -1,6 +1,5 @@
 <template>
     <div style="text-align: center">
-    <link rel="stylesheet" type="text/css" href="./style.css">
         <div class ="login-page">
             <form class ="form" v-on:submit.prevent="login()">
             <h1 class="h1">Signup</h1>
