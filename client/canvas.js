@@ -10,6 +10,12 @@ export function init(canvas, scene) {
 
 // TODO: Send input to server
 
+const wallImage = new Image()
+wallImage.src = '/assets/tile.png'
+
+const barrelImage = new Image()
+barrelImage.src = '/assets/barrel.png'
+
 export function render() {
     var height = canvasHeight / 11;
     var width = canvasWidth / 13;
@@ -17,20 +23,12 @@ export function render() {
     gameScene.forEach(function (arrayItem) {
         var type = arrayItem.type;
         var position = arrayItem.pos;
-        var base_image = new Image()
         switch (type) {
-            case "TILE":
-                base_image.onload = function(){
-                ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
-                }
-                base_image.src = 'assets/tile.PNG';
+            case "WALL":
+                ctx.drawImage(wallImage, height * position.x, width * position.y, width, height);
                 break;
             case "BARREL":
-                base_image.onload = function(){
-                    ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
-                    }
-                base_image.src = 'assets/barrel.PNG';
-                ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
+                ctx.drawImage(barrelImage, height * position.x, width * position.y, width, height);
                 break;
             case "PLAYER":
                 ctx.fillStyle = "#FFFFFF";
@@ -55,14 +53,14 @@ export function updateObjects(objects) {
 }
 
 export function removeObjects(objects) {
-        objects.forEach(d => {
-            gameScene.splice(d.id, 1)
-        })
+    objects.forEach(d => {
+        gameScene.splice(d.id, 1)
+    })
     draw()
 }
 
 
-export function initializeMap(scene){
+export function initializeMap(scene) {
     gameScene = scene;
 }
 
@@ -70,9 +68,9 @@ export function initializeMap(scene){
 function draw() {
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
     var base_image = new Image()
-    base_image.onload = function(){
+    base_image.onload = function () {
         ctx.drawImage(base_image, 0, 0, canvasWidth, canvasHeight);
-        }
+    }
     base_image.src = 'assets/barrel.PNG';
     render();
     window.requestAnimationFrame(draw)
