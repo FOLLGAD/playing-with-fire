@@ -41,7 +41,7 @@ export default {
         })
         .then(() => {
           this.$store.commit('setIsAuthenticated', true);
-          this.$router.push(`/gameRooms`);
+          this.$router.push(`/gamerooms`);
         })
         .catch((error) => {
           console.error('Authentication failed unexpectedly');

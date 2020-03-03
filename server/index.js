@@ -83,7 +83,11 @@ wss.on('connection', (ws, req) => {
             currentPlayer = player
 
             ws.send(JSON.stringify({ type: 'new-game', data: game.getData() }))
-            console.log(JSON.stringify({ type: 'new-game', data: game.getData() }))
+
+            let data = JSON.stringify({ type: 'update-gamelist', data: [game.getData()] })
+            wss.clients.forEach(c => {
+                c.send(data)
+            })
         } else if (type === 'join-game') {
             if (games.has(data)) {
                 let g = games.get(data)

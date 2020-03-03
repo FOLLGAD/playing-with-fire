@@ -150,7 +150,7 @@ class Game {
     }
 
     getData() {
-        return { entities: this.entities.map(e => e.getData()) }
+        return { entities: this.entities.map(e => e.getData()), id: this.id }
     }
 }
 
