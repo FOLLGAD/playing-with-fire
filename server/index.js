@@ -19,7 +19,7 @@ if (!process.env.cookieSecret) {
     throw new Error("Need a cookie secret in .env")
 }
 
-const PORT = 5000
+const PORT = process.env.PORT || 5000
 
 const app = express()
 const appCookieParser = cookieParser(process.env.cookieSecret)
@@ -174,7 +174,10 @@ const auth = express.Router()
 
 app.use('/api', auth)
 
-// Statically serve the contents of /client
+// Statically serve the contents of /public
+app.use(express.static(path.join(__dirname, '../public')))
+
+// Statically serve the contents of /dist
 app.use(express.static(path.join(__dirname, '../dist')))
 
 // For all other routes, serve the Vue frontend SPA
