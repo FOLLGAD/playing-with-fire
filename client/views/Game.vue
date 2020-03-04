@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { init, removeObjects, updateObjects } from "../canvas.js";
+import { init, removeObjects, updateObjects, draw } from "../canvas.js";
 export default {
   name: "Game",
   components: {},
@@ -18,22 +18,20 @@ export default {
     let r = this.$refs.gamecanvas;
     this.gameCanvas = r;
     this.socket = this.$root.socket;
-    this.gameCanvas.draw();
 
     this.socket.on("update", gamelogic => {
       // make game-canvas takes in the game logic using gamelogic
-
       updateObjects(gamelogic);
     });
     this.socket.on("remove", gamelogic => {
       // make game-canvas takes in the game logic using gamelogic
       remove(gamelogic);
     });
-
     this.socket.on("new-game", data => {
       console.log("new game data", data);
       init(r, data.entities);
     });
+    draw(); 
   },
   created() {}
 };
