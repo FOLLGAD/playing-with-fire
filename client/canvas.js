@@ -43,8 +43,7 @@ export function init(canvas, scene) {
     ctx = canvas.getContext("2d")
     gameScene = scene;
 
-
-//    promise.then(draw);
+    promise.then(draw);
 }
 
 // TODO: Send input to server
@@ -54,21 +53,36 @@ export function destroy() {
 }
 
 const wallImage = new Image()
-wallImage.src = '/assets/tile.png'
+wallImage.src = '/assets/tile.PNG'
 
 const barrelImage = new Image()
-barrelImage.src = '/assets/barrel.png'
+barrelImage.src = '/assets/barrel.PNG'
+
+const bombImage = new Image()
+bombImage.src = '/assets/bomb.PNG'
+
+const backgroundImage = new Image()
+backgroundImage.src = '/assets/background.PNG'
 
 let promise = new Promise(res => {
-    let done = 0
-    let add = () => {
+    let done = 0, required = 0
+
+    let add = function () {
         done++
-        if (done >= 2) res()
+        if (done >= required) res()
     }
 
+    backgroundImage.onload = add
+    required++
+
     wallImage.onload = add
+    required++
 
     barrelImage.onload = add
+    required++
+
+    bombImage.onload = add
+    required++
 })
 
 function render() {
@@ -87,14 +101,10 @@ function render() {
                 break;
             case "PLAYER":
                 ctx.fillStyle = "#FFFFFF";
-                ctx.fillRect((height/2) * position.x, (width/2) * position.y, width, height);
+                ctx.fillRect((height / 2) * position.x, (width / 2) * position.y, width, height);
                 break;
             case "BOMB":
-                base_image.onload = function(){
-                    ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
-                    }
-                base_image.src = 'assets/bomb.PNG';
-                ctx.drawImage(base_image, height * position.x, width * position.y, width, height);
+                ctx.drawImage(bombImage, height * position.x, width * position.y, width, height);
                 break;
             default:
                 console.error("unkown type", type);
@@ -111,14 +121,14 @@ export function updateObjects(objects) {
             }
         })
     })
-//    promise.then(draw);
+    //    promise.then(draw);
 }
 
 export function removeObjects(objects) {
     objects.forEach(d => {
         gameScene.splice(d.id, 1)
     })
-//    promise.then(draw);
+    //    promise.then(draw);
 }
 
 
@@ -126,23 +136,16 @@ export function initializeMap(scene) {
     gameScene = scene;
 }
 
-
 export function draw() {
-    if (ctx !== undefined){
-        console.log("CTX")
-        console.log(ctx)
-        ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-        var base_image = new Image()
-        base_image.onload = function () {
-            ctx.drawImage(base_image, 0, 0, canvasWidth, canvasHeight);
-        }
-        base_image.src = 'assets/barrel.PNG';
-        render();
-        ctx.fillRect(0 ,0 ,10 ,10)
-        window.requestAnimationFrame(draw)
-    }
-}
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight)
 
+    let pattern = ctx.createPattern(backgroundImage, 'repeat')
+    ctx.fillStyle = pattern
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+    
+    render();
+    window.requestAnimationFrame(draw)
+}
 
 let canvasWidth = 500, canvasHeight = 500;
 let ctx;

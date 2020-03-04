@@ -31,7 +31,6 @@ export default {
       console.log("new game data", data);
       init(r, data.entities);
     });
-    draw(); 
   },
   created() {}
 };
