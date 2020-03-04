@@ -1,10 +1,3 @@
-let input = {
-    delta: 0,
-    xdt: 0,     // Speed in x-axis
-    ydt: 0,     // Speed in y-axis
-    space: 0,   // Is dropping bomb?
-}
-
 let keyMaps = {
     left: {
         code: "KeyA",
@@ -28,34 +21,72 @@ let keyMaps = {
     },
 }
 
-function keyDownListener(e) {
+function keyListener(e) {
+    if (e.repeat) return
     Object.keys(keyMaps).forEach(key => {
         if (e.code === keyMaps[key].code) {
+            console.log(e.code, e.type)
             keyMaps[key].value = e.type === "keydown"
         }
     })
 }
 
-let ctx;
-let gameScene = [];
 const tileSize = 40;
-const canvasWidth = tileSize * 14,
-    canvasHeight = tileSize * 12;
+const canvasWidth = tileSize * 15,
+    canvasHeight = tileSize * 13;
 
-export function init(canvas, scene) {
-    window.addEventListener("keydown keyup", keyDownListener)
+let ctx,
+    gameScene = [],
+    tickInterval = null,
+    inputSentAt = null,
+    socket = null;
+
+export function init(ws, canvas, scene) {
+    window.addEventListener("keydown", keyListener)
+    window.addEventListener("keyup", keyListener)
     canvas.width = canvasWidth
     canvas.height = canvasHeight
     ctx = canvas.getContext("2d")
     gameScene = scene;
 
     promise.then(draw);
+    tickInterval = setInterval(tick, 1000 / 30)
+    socket = ws
+
+    socket.on("update", updates => {
+        updateObjects(updates)
+    })
+
+    socket.on("remove", gamelogic => {
+        // make game-canvas takes in the game logic using gamelogic
+        removeObjects(gamelogic);
+    });
 }
 
 // TODO: Send input to server
+function tick() {
+    let lastSentAt = inputSentAt
+    inputSentAt = Date.now()
+    if (!lastSentAt) return;
 
+    const input = {
+        delta: inputSentAt - lastSentAt,                    // Get the time diff in milliseconds between latest send
+        xdt: -keyMaps.left.value + keyMaps.right.value,     // Speed in x-axis
+        ydt: -keyMaps.up.value + keyMaps.down.value,        // Speed in y-axis
+        space: keyMaps.space.value,                         // Is dropping bomb?
+    }
+
+    if (input.xdt != 0 || input.ydt != 0 || input.space != 0) {
+        socket.send("input", input)
+        keyMaps.space.value = false
+    }
+}
+
+// Remove all listeners and intervals
 export function destroy() {
-    window.removeEventListener("keydown keyup", keyDownListener)
+    window.removeEventListener("keydown", keyListener)
+    window.removeEventListener("keyup", keyListener)
+    clearInterval(tickInterval)
 }
 
 const wallImage = new Image()
@@ -104,7 +135,7 @@ function render() {
                 break;
             case "PLAYER":
                 ctx.fillStyle = "tomato";
-                ctx.fillRect((tileSize / 2) * position.x, (tileSize / 2) * position.y, tileSize, tileSize);
+                ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "BOMB":
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
@@ -116,18 +147,19 @@ function render() {
 }
 
 export function updateObjects(objects) {
-    gameScene.forEach(g => {
-        objects.forEach(d => {
-            if (g.id == d.id) {
-                Object.assign(g, d)
-            }
-        })
+    objects.forEach(d => {
+        let found = gameScene.find(g => g.id === d.id)
+        if (found) {
+            Object.assign(found, d)
+        } else {
+            gameScene.push(d)
+        }
     })
 }
 
 export function removeObjects(idsToRemove) {
-    idsToRemove.forEach(d => {
-        gameScene.splice(gameScene.findIndex(g => g.id === d), 1)
+    idsToRemove.forEach(id => {
+        gameScene.splice(gameScene.findIndex(g => g.id === id), 1)
     })
 }
 

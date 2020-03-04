@@ -22,7 +22,7 @@ export default {
     socket: ""
   }),
   methods: {
-    redirect(gameid) {
+    redirectGame(gameid) {
       this.$router.push(`/game/${gameid}`);
     },
     createGame() {
@@ -30,12 +30,13 @@ export default {
     },
     enterGame(gameId) {
       this.$root.socket.send("join-game", gameId);
-      this.redirect(gameId);
     }
   },
   mounted() {
+    this.$root.socket.on("joined-game", data => {
+      this.redirectGame(data)
+    });
     this.$root.socket.on("update-gamelist", gameRooms => {
-      console.log("Updating", gameRooms)
       gameRooms.forEach(g_new => {
         let g_old = this.games.find(g => g.id === g_new.id)
         if (g_old) {
@@ -51,7 +52,6 @@ export default {
     fetch("/api/games")
       .then(res => res.json())
       .then(data => {
-        console.log(data);
         this.games = data.list;
       })
       .catch(console.error);

@@ -18,17 +18,17 @@ const authGuard = (to, from, next) => {
 }
 
 const routes = [
-    { path: '/game/:gameid', component: GameView, beforeEnter: authGuard },
-    { path: '/highscores', component: HighscoresView },
-    { path: '/login', component: LoginView },
-    { path: '/signup', component: SignupView },
-    { path: '/gamerooms', component: gameRoomsView },
-    { path: '/', component: Error404 },
-  ];
+  { path: '/gamerooms', component: gameRoomsView, beforeEnter: authGuard },
+  { path: '/game/:gameid', component: GameView, beforeEnter: authGuard },
+  { path: '/highscores', component: HighscoresView },
+  { path: '/login', component: LoginView },
+  { path: '/signup', component: SignupView },
+  { path: '/', component: Error404 },
+];
 
-  const router = new VueRouter({
-    mode: 'history',
-    routes,
-  });
-  
-  export default router;
+const router = new VueRouter({
+  mode: 'history',
+  routes,
+});
+
+export default router;

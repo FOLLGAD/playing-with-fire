@@ -70,19 +70,21 @@ wss.on('connection', (ws, req) => {
 
         // TODO: Add route for game list updates (gameRoomUpdate)
         // TODO: Leave games
-        if (type === 'create-game') {
+        if (type === 'input') {
+            currentGame.movePlayer(currentPlayer, data)
+        } else if (type === 'game-info') {
+            ws.send(JSON.stringify({ type: 'new-game', data: currentGame.getData() }))
+        } else if (type === 'create-game') {
             const gameid = uuid.v4()
             const game = new Game(gameid)
-            const player = new Player(ws)
 
-            game.joinGame(ws)
+            currentPlayer = game.joinGame(ws)
 
             games.set(gameid, game)
 
             currentGame = game
-            currentPlayer = player
 
-            ws.send(JSON.stringify({ type: 'new-game', data: game.getData() }))
+            ws.send(JSON.stringify({ type: 'joined-game', data: game.id }))
 
             let data = JSON.stringify({ type: 'update-gamelist', data: [game.getData()] })
             wss.clients.forEach(c => {
@@ -91,12 +93,17 @@ wss.on('connection', (ws, req) => {
         } else if (type === 'join-game') {
             if (games.has(data)) {
                 let g = games.get(data)
-                g.joinGame(ws)
+                currentPlayer = g.joinGame(ws)
                 currentGame = g
-                ws.send(JSON.stringify({ type: 'new-game', data: g.getData() }))
+                ws.send(JSON.stringify({ type: 'joined-game', data: { id: g.id } }))
             }
-        } else if (type === 'input') {
-            currentGame.movePlayer(currentPlayer, data)
+        }
+    })
+
+    ws.on('close', () => {
+        if (currentGame) {
+            currentGame.leaveGame(ws)
+            currentGame = currentPlayer = null
         }
     })
 })

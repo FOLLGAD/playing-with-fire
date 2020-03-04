@@ -19,7 +19,6 @@ class Socket {
     }
   }
   on(type, fn) {
-    console.log(type)
     this.listeners[type] = fn
   }
   send(type, data) {
