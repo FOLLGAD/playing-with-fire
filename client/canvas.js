@@ -36,10 +36,16 @@ function keyDownListener(e) {
     })
 }
 
+let ctx;
+let gameScene = [];
+const tileSize = 40;
+const canvasWidth = tileSize * 14,
+    canvasHeight = tileSize * 12;
+
 export function init(canvas, scene) {
     window.addEventListener("keydown keyup", keyDownListener)
-    canvas.width = 500
-    canvas.height = 500
+    canvas.width = canvasWidth
+    canvas.height = canvasHeight
     ctx = canvas.getContext("2d")
     gameScene = scene;
 
@@ -86,29 +92,25 @@ let promise = new Promise(res => {
 })
 
 function render() {
-    var height = canvasHeight / 12;
-    var width = canvasWidth / 14;
-
     gameScene.forEach(function (arrayItem) {
         var type = arrayItem.type;
         var position = arrayItem.pos;
         switch (type) {
             case "WALL":
-                ctx.drawImage(wallImage, height * position.x, width * position.y, width, height);
+                ctx.drawImage(wallImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "BARREL":
-                ctx.drawImage(barrelImage, height * position.x, width * position.y, width, height);
+                ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "PLAYER":
-                ctx.fillStyle = "#FFFFFF";
-                ctx.fillRect((height / 2) * position.x, (width / 2) * position.y, width, height);
+                ctx.fillStyle = "tomato";
+                ctx.fillRect((tileSize / 2) * position.x, (tileSize / 2) * position.y, tileSize, tileSize);
                 break;
             case "BOMB":
-                ctx.drawImage(bombImage, height * position.x, width * position.y, width, height);
+                ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             default:
                 console.error("unkown type", type);
-
         }
     });
 }
@@ -121,14 +123,12 @@ export function updateObjects(objects) {
             }
         })
     })
-    //    promise.then(draw);
 }
 
-export function removeObjects(objects) {
-    objects.forEach(d => {
-        gameScene.splice(d.id, 1)
+export function removeObjects(idsToRemove) {
+    idsToRemove.forEach(d => {
+        gameScene.splice(gameScene.findIndex(g => g.id === d), 1)
     })
-    //    promise.then(draw);
 }
 
 
@@ -142,11 +142,7 @@ export function draw() {
     let pattern = ctx.createPattern(backgroundImage, 'repeat')
     ctx.fillStyle = pattern
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    
+
     render();
     window.requestAnimationFrame(draw)
 }
-
-let canvasWidth = 500, canvasHeight = 500;
-let ctx;
-let gameScene = [];
