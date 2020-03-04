@@ -209,6 +209,27 @@ class Game {
         return false
     }
 
+    initializeEntities(){
+        // TODO: Adding barrels, doing it in the same iteration? 
+        let columnsNum = 14
+        let rowsNum = 12
+        for(let i = 0; i<rowsNum; i++){
+            if(i === 0 || i == (rowsNum - 1)){
+                let wall = new Wall({ id: this.idCounter, pos: { x: m, y: i}})
+                this.idCounter++
+                this.addEntity(wall)
+            }else if(i % 2) {
+                for(let m = 0; m<columnsNum; m++){
+                    if (m % 2 || (i === 0 || i == (columnsNum-1))) {
+                        let wall = new Wall({ id: this.idCounter, pos: { x: m, y: i}})
+                        this.idCounter++
+                        this.addEntity(wall)
+                    }
+                }
+            }
+        }
+    }
+
     getBlockByPosition(x,y){
         let block = users.find(block => ((block.pos.x === x) && (block.pos.y === y)))
         return block

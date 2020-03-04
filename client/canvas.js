@@ -72,8 +72,8 @@ let promise = new Promise(res => {
 })
 
 function render() {
-    var height = canvasHeight / 11;
-    var width = canvasWidth / 13;
+    var height = canvasHeight / 12;
+    var width = canvasWidth / 14;
 
     gameScene.forEach(function (arrayItem) {
         var type = arrayItem.type;
@@ -128,8 +128,6 @@ export function initializeMap(scene) {
 
 
 export function draw() {
-    console.log("CTX")
-    console.log(ctx)
     if (ctx !== undefined){
         console.log("CTX")
         console.log(ctx)
