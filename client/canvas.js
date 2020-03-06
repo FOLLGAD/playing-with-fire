@@ -25,7 +25,6 @@ function keyListener(e) {
     if (e.repeat) return
     Object.keys(keyMaps).forEach(key => {
         if (e.code === keyMaps[key].code) {
-            console.log(e.code, e.type)
             keyMaps[key].value = e.type === "keydown"
         }
     })

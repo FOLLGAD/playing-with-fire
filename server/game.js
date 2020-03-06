@@ -162,14 +162,24 @@ class Game {
                 player.pos.x = x
             } else {
                 player.pos.x = block.pos.x - 1
-                if(block && block.pos.x !== 14){
-                    player.pos.y += 0.1
+                if(block && block.pos.x !== 14 && (player.pos.y !== block.pos.y)){
+                    if ((block.pos.y - (player.pos.y -1) <= 0.1)){
+                        player.pos.y = block.pos.y + 1
+                        player.pos.x = x
+                    }else{
+                        player.pos.y += 0.2
+                    }
                 }
             }
 
-            if(blocktest && blocktest.isBlocking  && blocktest.pos.x !== 14 ){
+            if(blocktest && blocktest.isBlocking  && blocktest.pos.x !== 14 && (player.pos.y !== blocktest.pos.y)){
                 player.pos.x = blocktest.pos.x - 1
-                player.pos.y -= 0.1
+                if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1){
+                    player.pos.y = blocktest.pos.y - 1
+                    player.pos.x = x
+                }else{
+                    player.pos.y -= 0.2
+                }
             }
         } else if (xdt < 0) {
             let blocktest = this.getBlockByPosition(flooredX -1, ceiledY)
@@ -178,14 +188,24 @@ class Game {
                 player.pos.x = x
             } else {
                 player.pos.x = block.pos.x + 1
-                if(block && block.pos.x !== 0){
-                    player.pos.y += 0.1
+                if(block && block.pos.x !== 0 && (player.pos.y !== block.pos.y)){
+                    if (((block.pos.y + 1) - player.pos.y) <= 0.1){
+                        player.pos.y = block.pos.y + 1
+                        player.pos.x = x
+                    }else{
+                        player.pos.y += 0.2
+                    }
                 }
             }
 
-            if(blocktest && blocktest.isBlocking && blocktest.pos.x !== 0 ){
+            if(blocktest && blocktest.isBlocking && blocktest.pos.x !== 0 && (player.pos.y !== blocktest.pos.y)){
                 player.pos.x = blocktest.pos.x + 1
-                player.pos.y -= 0.1
+                    if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1){
+                        player.pos.y = blocktest.pos.y - 1
+                        player.pos.x = x
+                    }else{
+                        player.pos.y -= 0.2
+                    }
             }
         }
         // XX
@@ -198,13 +218,23 @@ class Game {
                     player.pos.y = y
                 }else {
                     player.pos.y = block.pos.y - 1
-                    if(block && block.pos.y !== 12){
-                    player.pos.x += 0.1
+                    if(block && block.pos.y !== 12 && (player.pos.x !== block.pos.x)){
+                        if (((block.pos.x + 1) - player.pos.x) <= 0.1){
+                            player.pos.x = block.pos.x + 1
+                            player.pos.y = y
+                        }else{
+                            player.pos.x += 0.2
+                        }
                     }
                 }
-                if(blocktest && blocktest.isBlocking && blocktest.pos.y !== 12){
+                if(blocktest && blocktest.isBlocking && blocktest.pos.y !== 12 && (player.pos.x !== blocktest.pos.x)){
                     player.pos.y = blocktest.pos.y - 1
-                    player.pos.x -= 0.1
+                    if ((player.pos.x - (blocktest.pos.x - 1)) <= 0.1){
+                        player.pos.x = blocktest.pos.x - 1
+                        player.pos.y = y
+                    }else{
+                        player.pos.x -= 0.2
+                    }
                 }
             } else if (ydt < 0) {
                 let blocktest = this.getBlockByPosition(ceiledX, flooredY - 1)
@@ -213,17 +243,26 @@ class Game {
                     player.pos.y = y
                 } else {
                     player.pos.y = block.pos.y + 1
-                    if(block && block.pos.y !== 0){
-                        player.pos.x += 0.1
+                    if(block && block.pos.y !== 0 && (player.pos.x !== block.pos.x)){
+                        if (((block.pos.x + 1) - player.pos.x) <= 0.1){
+                            player.pos.x = block.pos.x + 1
+                            player.pos.y = y
+                        }else{
+                            player.pos.x += 0.2
                         }
+                    }
                 }
-                if(blocktest && blocktest.isBlocking && blocktest.pos.y !== 0){
+                if(blocktest && blocktest.isBlocking && blocktest.pos.y !== 0 && (player.pos.x !== blocktest.pos.x)){
                     player.pos.y = blocktest.pos.y + 1
-                    player.pos.x -= 0.1
+                    if ((player.pos.x - (blocktest.pos.x - 1)) <= 0.1){
+                        player.pos.x = blocktest.pos.x - 1
+                        player.pos.y = y
+                    }else{
+                        player.pos.x -= 0.2
+                    }
                 }
             }
         }
-
         this.emitPlayerPos(player)
     }
 
