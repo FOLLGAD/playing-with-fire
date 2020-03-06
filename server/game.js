@@ -38,13 +38,6 @@ class Player extends Entity {
         this.maxBombs = 1
         this.pos = { x: 1, y: 1 }
 
-        // TODO: Input
-        // let input = {
-        // 	delta: delta,
-        // 	ydt: 0,
-        //     xdt: -1,
-        //     space: true,
-        // }
     }
 }
 
@@ -119,6 +112,9 @@ class Game {
     }
 
     joinGame(socket) {
+        if (this.sockets.indexOf(socket) !== -1) {
+            throw new Error("Already joined")
+        }
         let player = new Player({ id: this.nextId(), socket })
         this.entities.push(player)
         this.sockets.push(socket)
@@ -200,15 +196,15 @@ class Game {
                     }
                 }
             }
-        
+
             if(blocktest && blocktest.isBlocking && blocktest.pos.x !== 0 && player.pos.y !== blocktest.pos.y){
                 player.pos.x = blocktest.pos.x + 1
                     if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1){
-                        player.pos.y = blocktest.pos.y - 1
-                        player.pos.x = x
+                    player.pos.y = blocktest.pos.y - 1
+                    player.pos.x = x
                     }else{
-                        player.pos.y -= 0.1
-                    }
+                    player.pos.y -= 0.1
+                }
             }
         }
         // XX
@@ -338,8 +334,13 @@ class Game {
             .forEach(element => {
                 let x = Math.floor(element.pos.x)
                 let y = Math.floor(element.pos.y)
+<<<<<<< HEAD
                 let currentblock = this.getBlockByPosition(x,y)
                 if(currentblock && currentblock.type === "FIRE"){
+=======
+                let currentblock = getBlockByPosition(x, y)
+                if (currentblock.type === "FIRE") {
+>>>>>>> c4ec83e2621e240a4af46af9ddfc3870cee5edfd
                     this.removeEntity(element)
                 }
 

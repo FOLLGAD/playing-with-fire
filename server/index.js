@@ -63,6 +63,18 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type, data }))
     }
 
+    let leaveGame = () => {
+        if (currentGame) {
+            currentGame.leaveGame(ws)
+            if (currentGame.sockets.length === 0) {
+                currentGame.destroy()
+                games.delete(currentGame.id)
+            }
+            currentGame = null
+            currentPlayer = null
+        }
+    }
+
     ws.on('message', message => {
         const { type, data } = JSON.parse(message)
 
@@ -71,7 +83,9 @@ wss.on('connection', (ws, req) => {
         // TODO: Add route for game list updates (gameRoomUpdate)
         // TODO: Leave games
         if (type === 'input') {
-            currentGame.movePlayer(currentPlayer, data)
+            if (currentPlayer) {
+                currentGame.movePlayer(currentPlayer, data)
+            }
         } else if (type === 'game-info') {
             ws.send(JSON.stringify({ type: 'new-game', data: currentGame.getData() }))
         } else if (type === 'create-game') {
@@ -84,7 +98,7 @@ wss.on('connection', (ws, req) => {
 
             currentGame = game
 
-            ws.send(JSON.stringify({ type: 'joined-game', data: game.id }))
+            ws.send(JSON.stringify({ type: 'redirect-game', data: { id: game.id } }))
 
             let data = JSON.stringify({ type: 'update-gamelist', data: [game.getData()] })
             wss.clients.forEach(c => {
@@ -93,18 +107,25 @@ wss.on('connection', (ws, req) => {
         } else if (type === 'join-game') {
             if (games.has(data)) {
                 let g = games.get(data)
-                currentPlayer = g.joinGame(ws)
+
+                if (currentGame && currentGame.id !== g.id) {
+                    currentGame.leaveGame(ws)
+                } else if (!currentGame) {
+                    currentPlayer = g.joinGame(ws)
+                }
+
                 currentGame = g
-                ws.send(JSON.stringify({ type: 'joined-game', data: { id: g.id } }))
+                ws.send(JSON.stringify({ type: 'joined-game', data: currentGame.getData() }))
+            } else {
+                ws.send(JSON.stringify({ type: 'not-found' }))
             }
+        } else if (type === 'leave-game') {
+            leaveGame()
         }
     })
 
     ws.on('close', () => {
-        if (currentGame) {
-            currentGame.leaveGame(ws)
-            currentGame = currentPlayer = null
-        }
+        leaveGame()
     })
 })
 

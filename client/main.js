@@ -8,21 +8,23 @@ import './style.css'
 class Socket {
   constructor() {
     this.listeners = {}
+    this.connect()
   }
-  setSocket(socket) {
-    this.socket = socket
-    this.socket.onmessage = (msg) => {
+  connect() {
+    let socket = new WebSocket(`ws://${window.location.host}/api`)
+    this.socket = new Promise(r => socket.onopen = () => r(socket))
+    this.socket.then(s => s.onmessage = (msg) => {
       let { type, data } = JSON.parse(msg.data)
       if (this.listeners[type]) {
         this.listeners[type](data)
       }
-    }
+    })
   }
   on(type, fn) {
     this.listeners[type] = fn
   }
   send(type, data) {
-    return this.socket.send(JSON.stringify({ type, data }))
+    return this.socket.then(s => s.send(JSON.stringify({ type, data })))
   }
 }
 
@@ -40,12 +42,6 @@ Vue.config.productionTip = false;
     router,
     store,
     render: h => h(App),
-    methods: {
-      connectSocket() {
-        let socket = new WebSocket(`ws://${window.location.host}/api`)
-        this.socket.setSocket(socket)
-      }
-    },
     data: {
       socket: new Socket(),
     },
