@@ -139,8 +139,11 @@ function render() {
             case "BOMB":
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
+            case "FIRE":
+                ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                break;
             default:
-                console.error("unkown type", type);
+                console.error("unkown type, this block doesnt exist in game", type);
         }
     });
 }
@@ -156,9 +159,9 @@ export function updateObjects(objects) {
     })
 }
 
-export function removeObjects(idsToRemove) {
-    idsToRemove.forEach(id => {
-        gameScene.splice(gameScene.findIndex(g => g.id === id), 1)
+export function removeObjects(objects) {
+    objects.forEach(d => {
+        gameScene.splice(gameScene.findIndex(g => g.id === d.id), 1)
     })
 }
 

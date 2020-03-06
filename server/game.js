@@ -35,7 +35,6 @@ class Player extends Entity {
         this.lastBombPlace = null
         this.bombCooldown = 3000 // 3 Seconds
         this.explodeTimer = 2000 // 2 Seconds
-        this.bombTimeout = 2500 // 2.5 Seconds
         this.maxBombs = 1
         this.pos = { x: 1, y: 1 }
 
@@ -58,7 +57,7 @@ class Wall extends Entity {
 }
 
 class Fire extends Entity {
-    constructor({ id, pos }) {
+    constructor({ id, pos, timeout }) {
         super({ type: Entity.Types.FIRE, id })
         this.timeOut = timeout
         this.pos = pos
@@ -115,8 +114,8 @@ class Game {
         this.initializeBarrels()
         this.initializeWalls()
         this.interval = null
-
         this.tick = this.tick.bind(this)
+        this.start()
     }
 
     joinGame(socket) {
@@ -140,7 +139,7 @@ class Game {
 
     // Start playing
     start() {
-        this.interval = setInterval(this.tick)
+        this.interval = setInterval(this.tick, 1000/30)
     }
 
     movePlayer(player, { delta, xdt, ydt, space }) {
@@ -316,18 +315,20 @@ class Game {
                 // TODO: This is for the first four blocks from the center to the east, add north, west, south in same way with three?
                 for (let i = 0; i < 4; i++) {
                     let block = this.getBlockByPosition(x + i, y)
-                    if (block.type === "WALL") {
-                        break;
-                    } else if (block.type === "BARREL") {
-                        this.removeEntity(block.id)
-                        let fire = new Fire({ id: this.nextId(), timeout: player.bombTimeout })
-                        this.addEntity(fire)
-                        setTimeout(function () { this.removeEntity(fire.id); }, fire.timeOut);
-                        break;
-                    } else {
-                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: player.bombTimeout })
-                        this.addEntity(fire)
-                        setTimeout(function () { this.removeEntity(fire.id); }, player.bombTimeout);
+                    if(block){
+                            if (block.type === "WALL") {
+                                break;
+                            } else if (block.type === "BARREL") {
+                                this.removeEntity(block.id)
+                                let fire = new Fire({ id: this.nextId(),pos: { x: x + i, y: y }, timeout: 2500 })
+                                this.addEntity(fire)
+                                setTimeout(function () { this.removeEntity(fire.id); }, fire.timeOut);
+                                break;
+                            } 
+                        }else{
+                            let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+                            this.addEntity(fire)
+                            setTimeout(function () { this.removeEntity(fire); }, fire.timeOut);
                     }
                 }
             });
@@ -337,17 +338,16 @@ class Game {
             .forEach(element => {
                 let x = Math.floor(element.pos.x)
                 let y = Math.floor(element.pos.y)
-                let currentblock = getBlockByPosition(x,y)
-                if(currentblock.type === "FIRE"){
+                let currentblock = this.getBlockByPosition(x,y)
+                if(currentblock && currentblock.type === "FIRE"){
                     this.removeEntity(element)
                 }
 
             });
     }
 
-    removeEntity(id) {
-        let index = this.entities.findIndex(block => block.id === id)
-        this.entities.splice(index, 1)
+    removeEntity(entity) {
+        this.entities.splice(this.entities.findIndex(g => g.id === entity.id), 1)
 
         let message = JSON.stringify({ type: 'delete', data: [entity.getData()] })
         this.sockets.forEach(s => s.send(message))
