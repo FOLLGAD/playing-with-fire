@@ -4,7 +4,7 @@
       <div style="text-align: center;">
         <h4>
           <span>{{game.id}} {{game.players}}</span>
-          <button @click="enterGame(game.id)">Enter game</button>
+          <button @click="redirectGame(game.id)">Enter game</button>
         </h4>
       </div>
     </div>
@@ -27,14 +27,11 @@ export default {
     },
     createGame() {
       this.$root.socket.send("create-game");
-    },
-    enterGame(gameId) {
-      this.$root.socket.send("join-game", gameId);
     }
   },
   mounted() {
-    this.$root.socket.on("joined-game", data => {
-      this.redirectGame(data)
+    this.$root.socket.on("redirect-game", ({id}) => {
+      this.redirectGame(id)
     });
     this.$root.socket.on("update-gamelist", gameRooms => {
       gameRooms.forEach(g_new => {
@@ -48,7 +45,6 @@ export default {
     });
   },
   created() {
-    this.$root.connectSocket();
     fetch("/api/games")
       .then(res => res.json())
       .then(data => {

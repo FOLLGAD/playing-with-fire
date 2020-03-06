@@ -84,7 +84,7 @@ wss.on('connection', (ws, req) => {
 
             currentGame = game
 
-            ws.send(JSON.stringify({ type: 'joined-game', data: game.id }))
+            ws.send(JSON.stringify({ type: 'redirect-game', data: { id: game.id } }))
 
             let data = JSON.stringify({ type: 'update-gamelist', data: [game.getData()] })
             wss.clients.forEach(c => {
@@ -93,9 +93,24 @@ wss.on('connection', (ws, req) => {
         } else if (type === 'join-game') {
             if (games.has(data)) {
                 let g = games.get(data)
-                currentPlayer = g.joinGame(ws)
+
+                if (currentGame && currentGame.id !== g.id) {
+                    currentGame.leaveGame(ws)
+                    currentPlayer = g.joinGame(ws)
+                }
+
                 currentGame = g
-                ws.send(JSON.stringify({ type: 'joined-game', data: { id: g.id } }))
+                ws.send(JSON.stringify({ type: 'joined-game', data: currentGame.getData() }))
+            }
+        } else if (type === 'leave-game') {
+            if (currentGame) {
+                currentGame.leaveGame(ws)
+                if (currentGame.sockets.length === 0) {
+                    currentGame.destroy()
+                    games.delete(currentGame.id)
+                }
+                currentGame = null
+                currentPlayer = null
             }
         }
     })

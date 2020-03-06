@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import { init } from "../canvas.js";
+import { init, destroy } from "../canvas.js";
 export default {
   name: "Game",
   components: {},
@@ -13,17 +13,19 @@ export default {
     gameCanvas: null,
     socket: null
   }),
-  mounted() {
+  async mounted() {
     this.gameCanvas = this.$refs.gamecanvas;
-    this.socket = this.$root.socket;
+    this.socket = await this.$root.socket;
 
-    this.socket.on("new-game", data => {
-      console.log(data)
-      console.log("New game made")
+    this.socket.send("join-game", this.$route.params.gameid)
+
+    this.socket.on("joined-game", data => {
       init(this.socket, this.gameCanvas, data.entities);
     });
-
-    this.socket.send('game-info')
   },
+  beforeDestroy() {
+    if (this.socket) this.socket.send('leave-game')
+    destroy()
+  }
 };
 </script>

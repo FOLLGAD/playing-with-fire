@@ -40,6 +40,7 @@ export default {
           throw new Error(resp.text);
         })
         .then(() => {
+          this.$root.socket.connect()
           this.$store.commit('setIsAuthenticated', true);
           this.$router.push(`/gamerooms`);
         })

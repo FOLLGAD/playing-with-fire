@@ -38,7 +38,8 @@ let ctx,
     gameScene = [],
     tickInterval = null,
     inputSentAt = null,
-    socket = null;
+    socket = null,
+    rendering = false;
 
 export function init(ws, canvas, scene) {
     window.addEventListener("keydown", keyListener)
@@ -47,6 +48,7 @@ export function init(ws, canvas, scene) {
     canvas.height = canvasHeight
     ctx = canvas.getContext("2d")
     gameScene = scene;
+    rendering = true;
 
     promise.then(draw);
     tickInterval = setInterval(tick, 1000 / 30)
@@ -86,6 +88,7 @@ export function destroy() {
     window.removeEventListener("keydown", keyListener)
     window.removeEventListener("keyup", keyListener)
     clearInterval(tickInterval)
+    rendering = false
 }
 
 const wallImage = new Image()
@@ -168,12 +171,14 @@ export function initializeMap(scene) {
 }
 
 export function draw() {
+    if (!rendering) return;
+    
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-
+    
     let pattern = ctx.createPattern(backgroundImage, 'repeat')
     ctx.fillStyle = pattern
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-
+    
     render();
     window.requestAnimationFrame(draw)
 }
