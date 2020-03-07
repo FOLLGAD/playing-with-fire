@@ -318,13 +318,13 @@ class Game {
                                 this.removeEntity(block.id)
                                 let fire = new Fire({ id: this.nextId(),pos: { x: x + i, y: y }, timeout: 2500 })
                                 this.addEntity(fire)
-                                setTimeout(function () { this.removeEntity(fire.id); }, fire.timeOut);
+                                setTimeout(function () { this.removeEntity(fire); }, fire.timeOut);
                                 break;
                             } 
-                        }else{
-                            let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
-                            this.addEntity(fire)
-                            setTimeout(function () { this.removeEntity(fire); }, fire.timeOut);
+                    }else{
+                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+                        this.addEntity(fire)
+                        setTimeout(function () { this.removeEntity(fire); }, fire.timeOut);
                     }
                 }
             });
@@ -334,13 +334,8 @@ class Game {
             .forEach(element => {
                 let x = Math.floor(element.pos.x)
                 let y = Math.floor(element.pos.y)
-<<<<<<< HEAD
-                let currentblock = this.getBlockByPosition(x,y)
-                if(currentblock && currentblock.type === "FIRE"){
-=======
-                let currentblock = getBlockByPosition(x, y)
+                let currentblock = this.getBlockByPosition(x, y)
                 if (currentblock.type === "FIRE") {
->>>>>>> c4ec83e2621e240a4af46af9ddfc3870cee5edfd
                     this.removeEntity(element)
                 }
 
