@@ -71,8 +71,8 @@ class Barrel extends Entity {
     constructor({ id, pos }) {
         super({ type: Entity.Types.BARREL, id })
         this.pos = pos
-        this.powerup = null
         this.isBlocking = true
+        this.powerup = null
 
         // Generate random powerup
         if (Math.random() > 0.8) {
@@ -135,7 +135,7 @@ class Game {
 
     // Start playing
     start() {
-        this.interval = setInterval(this.tick, 1000/30)
+        this.interval = setInterval(this.tick, 1000 / 30)
     }
 
     movePlayer(player, { delta, xdt, ydt, space }) {
@@ -154,86 +154,86 @@ class Game {
             let blocktest = this.getBlockByPosition(flooredX + 1, ceiledY)
             let block = this.getBlockByPosition(flooredX + 1, flooredY) || this.getBlockByPosition(ceiledX + 1, flooredY)
             if (!block || (block.isBlocking && player.pos.x + 1 < block.pos.x)) {
-                if (!block || Math.floor(x) < block.pos.x){
+                if (!block || Math.floor(x) < block.pos.x) {
                     player.pos.x = x
                 }
             } else {
                 player.pos.x = block.pos.x - 1
-                if(block && block.pos.x !== 14 && (player.pos.y !== block.pos.y)){
-                    if ((block.pos.y - (player.pos.y -1) <= 0.1)){
+                if (block && block.pos.x !== 14 && (player.pos.y !== block.pos.y)) {
+                    if ((block.pos.y - (player.pos.y - 1) <= 0.1)) {
                         player.pos.y = block.pos.y + 1
                         player.pos.x = x
-                    }else{
+                    } else {
                         player.pos.y += 0.1
                     }
                 }
             }
 
-            if(blocktest && blocktest.isBlocking  && blocktest.pos.x !== 14 && (player.pos.y !== blocktest.pos.y)){
+            if (blocktest && blocktest.isBlocking && blocktest.pos.x !== 14 && (player.pos.y !== blocktest.pos.y)) {
                 player.pos.x = blocktest.pos.x - 1
-                if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1){
+                if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1) {
                     player.pos.y = blocktest.pos.y - 1
                     player.pos.x = x
-                }else{
+                } else {
                     player.pos.y -= 0.1
                 }
             }
         } else if (xdt < 0) {
-            let blocktest = this.getBlockByPosition(flooredX -1, ceiledY)
+            let blocktest = this.getBlockByPosition(flooredX - 1, ceiledY)
             let block = this.getBlockByPosition(flooredX - 1, flooredY) || this.getBlockByPosition(ceiledX - 1, flooredY)
             if (!block || (block.isBlocking && player.pos.x > block.pos.x + 1)) {
-                if (!block || Math.floor(x) > block.pos.x){
+                if (!block || Math.floor(x) > block.pos.x) {
                     player.pos.x = x
                 }
             } else {
                 player.pos.x = block.pos.x + 1
-                if(block && block.pos.x !== 0 && (player.pos.y !== block.pos.y)){
-                    if (((block.pos.y + 1) - player.pos.y) <= 0.1){
+                if (block && block.pos.x !== 0 && (player.pos.y !== block.pos.y)) {
+                    if (((block.pos.y + 1) - player.pos.y) <= 0.1) {
                         player.pos.y = block.pos.y + 1
                         player.pos.x = x
-                    }else{
+                    } else {
                         player.pos.y += 0.1
                     }
                 }
             }
 
-            if(blocktest && blocktest.isBlocking && blocktest.pos.x !== 0 && player.pos.y !== blocktest.pos.y){
+            if (blocktest && blocktest.isBlocking && blocktest.pos.x !== 0 && player.pos.y !== blocktest.pos.y) {
                 player.pos.x = blocktest.pos.x + 1
-                    if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1){
+                if ((player.pos.y - (blocktest.pos.y - 1)) <= 0.1) {
                     player.pos.y = blocktest.pos.y - 1
                     player.pos.x = x
-                    }else{
+                } else {
                     player.pos.y -= 0.1
                 }
             }
         }
         // XX
         // 
-        if(xdt === 0){
+        if (xdt === 0) {
             if (ydt > 0) {
                 let blocktest = this.getBlockByPosition(ceiledX, flooredY + 1)
                 let block = this.getBlockByPosition(flooredX, flooredY + 1) || this.getBlockByPosition(flooredX, ceiledY + 1)
                 if (!block || (block.isBlocking && player.pos.y + 1 < block.pos.y)) {
-                    if (!block || Math.floor(y) < block.pos.y){
+                    if (!block || Math.floor(y) < block.pos.y) {
                         player.pos.y = y
                     }
-                }else {
+                } else {
                     player.pos.y = block.pos.y - 1
-                    if(block && block.pos.y !== 12 && (player.pos.x !== block.pos.x)){
-                        if (((block.pos.x + 1) - player.pos.x) <= 0.1){
+                    if (block && block.pos.y !== 12 && (player.pos.x !== block.pos.x)) {
+                        if (((block.pos.x + 1) - player.pos.x) <= 0.1) {
                             player.pos.x = block.pos.x + 1
                             player.pos.y = y
-                        }else{
+                        } else {
                             player.pos.x += 0.1
                         }
                     }
                 }
-                if(blocktest && blocktest.isBlocking && blocktest.pos.y !== 12 && (player.pos.x !== blocktest.pos.x)){
+                if (blocktest && blocktest.isBlocking && blocktest.pos.y !== 12 && (player.pos.x !== blocktest.pos.x)) {
                     player.pos.y = blocktest.pos.y - 1
-                    if ((player.pos.x - (blocktest.pos.x - 1)) <= 0.1){
+                    if ((player.pos.x - (blocktest.pos.x - 1)) <= 0.1) {
                         player.pos.x = blocktest.pos.x - 1
                         player.pos.y = y
-                    }else{
+                    } else {
                         player.pos.x -= 0.1
                     }
                 }
@@ -241,26 +241,26 @@ class Game {
                 let blocktest = this.getBlockByPosition(ceiledX, flooredY - 1)
                 let block = this.getBlockByPosition(flooredX, flooredY - 1) || this.getBlockByPosition(flooredX, ceiledY - 1)
                 if (!block || (block.isBlocking && player.pos.y > block.pos.y + 1)) {
-                    if (!block || Math.floor(y) > block.pos.y){
+                    if (!block || Math.floor(y) > block.pos.y) {
                         player.pos.y = y
                     }
                 } else {
                     player.pos.y = block.pos.y + 1
-                    if(block && block.pos.y !== 0 && (player.pos.x !== block.pos.x)){
-                        if (((block.pos.x + 1) - player.pos.x) <= 0.1){
+                    if (block && block.pos.y !== 0 && (player.pos.x !== block.pos.x)) {
+                        if (((block.pos.x + 1) - player.pos.x) <= 0.1) {
                             player.pos.x = block.pos.x + 1
                             player.pos.y = y
-                        }else{
+                        } else {
                             player.pos.x += 0.1
                         }
                     }
                 }
-                if(blocktest && blocktest.isBlocking && blocktest.pos.y !== 0 && (player.pos.x !== blocktest.pos.x)){
+                if (blocktest && blocktest.isBlocking && blocktest.pos.y !== 0 && (player.pos.x !== blocktest.pos.x)) {
                     player.pos.y = blocktest.pos.y + 1
-                    if ((player.pos.x - (blocktest.pos.x - 1)) <= 0.1){
+                    if ((player.pos.x - (blocktest.pos.x - 1)) <= 0.1) {
                         player.pos.x = blocktest.pos.x - 1
                         player.pos.y = y
-                    }else{
+                    } else {
                         player.pos.x -= 0.1
                     }
                 }
@@ -311,22 +311,54 @@ class Game {
                 // TODO: This is for the first four blocks from the center to the east, add north, west, south in same way with three?
                 for (let i = 0; i < 4; i++) {
                     let block = this.getBlockByPosition(x + i, y)
-                    if(block){
-                            if (block.type === "WALL") {
-                                break;
-                            } else if (block.type === "BARREL") {
-                                this.removeEntity(block.id)
-                                let fire = new Fire({ id: this.nextId(),pos: { x: x + i, y: y }, timeout: 2500 })
-                                this.addEntity(fire)
-                                setTimeout(function () { this.removeEntity(fire); }, fire.timeOut);
-                                break;
-                            } 
-                    }else{
+                    if (block && block.type === "WALL") {
+                        break;
+                    } else if (block && block.type === "BARREL") {
+                        this.removeEntity(block)
                         let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
                         this.addEntity(fire)
-                        setTimeout(function () { this.removeEntity(fire); }, fire.timeOut);
+                        setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
+                        break;
+                    } else {
+                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+                        this.addEntity(fire)
+                        setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                     }
                 }
+            // Logic for north, west and south
+            //    for(let i = 0; i<3; i++){
+            //        for(let m = 0; m<3; m++){
+            //            switch (i){
+            //            case (0):
+            //              
+            //              break;
+            //            case (1)
+            //
+            //              break;
+            //            case (2)
+            //              
+            //              break;
+            //            default:
+            //
+            //            }  
+            //            
+            //
+            //            let block = this.getBlockByPosition(x + i, y)
+            //            if (block && block.type === "WALL") {
+            //                break;
+            //            } else if (block && block.type === "BARREL") {
+            //                this.removeEntity(block)
+            //                let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+            //                this.addEntity(fire)
+            //                setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
+            //                break;
+            //            } else {
+            //                let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+            //                this.addEntity(fire)
+            //                setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
+            //            }
+            //        } 
+            //    }
             });
         // Go through all players
         this.entities
@@ -335,18 +367,23 @@ class Game {
                 let x = Math.floor(element.pos.x)
                 let y = Math.floor(element.pos.y)
                 let currentblock = this.getBlockByPosition(x, y)
-                if (currentblock.type === "FIRE") {
+                if (currentblock && currentblock.type === "FIRE") {
                     this.removeEntity(element)
                 }
-
             });
     }
 
-    removeEntity(entity) {
-        this.entities.splice(this.entities.findIndex(g => g.id === entity.id), 1)
+    removeEntity(entityToRemove) {
+        let [entity] = this.entities.splice(this.entities.findIndex(g => g.id === entityToRemove.id), 1)
 
-        let message = JSON.stringify({ type: 'delete', data: [entity.getData()] })
-        this.sockets.forEach(s => s.send(message))
+        if (entity) {
+            if (entity.type === Entity.Types.BARREL && entity.powerup) {
+                this.addEntity(new Powerup({ id: this.nextId(), powerupType: entity.powerup, pos: { x: entity.pos.x, y: entity.pos.y } }))
+            }
+
+            let message = JSON.stringify({ type: 'delete', data: [entity.getData()] })
+            this.sockets.forEach(s => s.send(message))
+        }
     }
 
     procentageChance(proc) {
