@@ -78,7 +78,7 @@ wss.on('connection', (ws, req) => {
     ws.on('message', message => {
         const { type, data } = JSON.parse(message)
 
-        console.log(`${ws.username} says: ${type} ${data}`)
+        // console.log(`${ws.username} says: ${type} ${data}`)
 
         // TODO: Add route for game list updates (gameRoomUpdate)
         // TODO: Leave games
@@ -197,7 +197,7 @@ const auth = express.Router()
     })
     .get('/games', authMiddleware, async (req, res) => {
         console.log(games)
-        res.status(200).json({ list: Array.from(games.values()) })
+        res.status(200).json({ list: Array.from(games.values()).map(g => g.getData()) })
     })
 
 app.use('/api', auth)
