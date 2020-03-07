@@ -53,6 +53,7 @@ class Fire extends Entity {
     constructor({ id, pos, timeout }) {
         super({ type: Entity.Types.FIRE, id })
         this.timeOut = timeout
+        this.isBlocking = false
         this.pos = pos
     }
 }
@@ -305,10 +306,11 @@ class Game {
         this.entities
             .filter(elem => elem.type === Entity.Types.BOMB && Date.now() >= elem.explodesAt)
             .forEach(element => {
-                // Bomb position?
+                // Bomb position
                 let x = Math.floor(element.pos.x)
                 let y = Math.floor(element.pos.y)
-                // TODO: This is for the first four blocks from the center to the east, add north, west, south in same way with three?
+                this.removeEntity(element)
+                //East and center
                 for (let i = 0; i < 4; i++) {
                     let block = this.getBlockByPosition(x + i, y)
                     if (block && block.type === "WALL") {
@@ -325,51 +327,64 @@ class Game {
                         setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                     }
                 }
-            // Logic for north, west and south
-            //    for(let i = 0; i<3; i++){
-            //        for(let m = 0; m<3; m++){
-            //            switch (i){
-            //            case (0):
-            //              
-            //              break;
-            //            case (1)
-            //
-            //              break;
-            //            case (2)
-            //              
-            //              break;
-            //            default:
-            //
-            //            }  
-            //            
-            //
-            //            let block = this.getBlockByPosition(x + i, y)
-            //            if (block && block.type === "WALL") {
-            //                break;
-            //            } else if (block && block.type === "BARREL") {
-            //                this.removeEntity(block)
-            //                let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
-            //                this.addEntity(fire)
-            //                setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
-            //                break;
-            //            } else {
-            //                let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
-            //                this.addEntity(fire)
-            //                setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
-            //            }
-            //        } 
-            //    }
+                for(let i = 1; i<4; i++){
+                    let xhelp, yhelp
+                    for(let m = 0; m<3; m++){
+                        switch (i){
+                        case (1):
+                        //North 
+                        xhelp = x
+                        yhelp= y - m
+                          break;
+                        case (2):
+                        //West
+                        xhelp = x - m
+                        yhelp = y
+                          break;
+                        case (3):
+                        //South
+                        xhelp = x
+                        yhelp = y + m
+                          break;
+                        default:
+                            console.error("Unknown direction for fire")
+                        }  
+                        
+            
+                        let block = this.getBlockByPosition(xhelp, yhelp)
+                        if (block && block.type === "WALL") {
+                            break;
+                        } else if (block && block.type === "BARREL") {
+                            this.removeEntity(block)
+                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
+                            this.addEntity(fire)
+                            setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
+                            break;
+                        } else {
+                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
+                            this.addEntity(fire)
+                            setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
+                        }
+                    } 
+                }
             });
         // Go through all players
         this.entities
-            .filter(elem => elem.type === Entity.Types.PLAYER)
-            .forEach(element => {
-                let x = Math.floor(element.pos.x)
-                let y = Math.floor(element.pos.y)
-                let currentblock = this.getBlockByPosition(x, y)
-                if (currentblock && currentblock.type === "FIRE") {
-                    this.removeEntity(element)
-                }
+            .filter(elem => elem.type === Entity.Types.Fire)
+            .forEach(fireBlock => {
+            this.entities
+                .filter(elem => elem.type === Entity.Types.PLAYER)
+                .forEach(player => {
+                    let x = Math.floor(player.pos.x)
+                    let y = Math.floor(player.pos.y)
+                    console.log(fireBlock.pos.x)
+                    console.log(x)
+                    console.log.log(fireBlock.pos.y)
+                    console.log.log(y)
+                    if ((fireBlock.pos.x === x) && (fireBlock.pos.y === y)) {
+                        this.removeEntity(player)
+                    }
+                });
             });
     }
 

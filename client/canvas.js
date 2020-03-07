@@ -58,7 +58,7 @@ export function init(ws, canvas, scene) {
         updateObjects(updates)
     })
 
-    socket.on("remove", gamelogic => {
+    socket.on("delete", gamelogic => {
         // make game-canvas takes in the game logic using gamelogic
         removeObjects(gamelogic);
     });
@@ -103,6 +103,9 @@ bombImage.src = '/assets/bomb.PNG'
 const backgroundImage = new Image()
 backgroundImage.src = '/assets/background.PNG'
 
+//const fireImage = new Image()
+//backgroundImage.src = '/assets/fire.PNG'
+
 let promise = new Promise(res => {
     let done = 0, required = 0
 
@@ -122,6 +125,9 @@ let promise = new Promise(res => {
 
     bombImage.onload = add
     required++
+
+    //fireImage.onload = add
+    //required++
 })
 
 function render() {
