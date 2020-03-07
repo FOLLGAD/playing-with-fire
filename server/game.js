@@ -53,7 +53,6 @@ class Fire extends Entity {
     constructor({ id, pos, timeout }) {
         super({ type: Entity.Types.FIRE, id })
         this.timeOut = timeout
-        this.isBlocking = false
         this.pos = pos
     }
 }
@@ -124,14 +123,13 @@ class Game {
 
     leaveGame(socket) {
         this.sockets.splice(this.sockets.indexOf(socket), 1)
-        // Delete player from game?
-        // let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
-        // if (player) {
-        //     let message = JSON.stringify({ type: 'remove', data: [player.id] })
-        //     this.sockets.forEach(p => {
-        //         p.send(message)
-        //     })
-        // }
+         let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
+         if (player) {
+             let message = JSON.stringify({ type: 'remove', data: [player.id] })
+             this.sockets.forEach(p => {
+                 p.send(message)
+             })
+         }
     }
 
     // Start playing
@@ -369,20 +367,17 @@ class Game {
                 }
             });
         // Go through all players
+
         this.entities
-            .filter(elem => elem.type === Entity.Types.Fire)
+            .filter(elem => elem.type === Entity.Types.FIRE)
             .forEach(fireBlock => {
             this.entities
                 .filter(elem => elem.type === Entity.Types.PLAYER)
                 .forEach(player => {
                     let x = Math.floor(player.pos.x)
                     let y = Math.floor(player.pos.y)
-                    console.log(fireBlock.pos.x)
-                    console.log(x)
-                    console.log.log(fireBlock.pos.y)
-                    console.log.log(y)
-                    if ((fireBlock.pos.x === x) && (fireBlock.pos.y === y)) {
-                        this.removeEntity(player)
+                    if (((fireBlock.pos.x === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x - 1 === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x === x) && (fireBlock.pos.y - 1 === y))) {
+                        this.leaveGame(player.socket)
                     }
                 });
             });

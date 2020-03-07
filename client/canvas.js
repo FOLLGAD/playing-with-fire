@@ -141,15 +141,15 @@ function render() {
             case "BARREL":
                 ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
-            case "PLAYER":
-                ctx.fillStyle = "tomato";
-                ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
-                break;
             case "BOMB":
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "FIRE":
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                break;
+            case "PLAYER":
+                ctx.fillStyle = "tomato";
+                ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             default:
                 console.error("unkown type, this block doesnt exist in game", type);
