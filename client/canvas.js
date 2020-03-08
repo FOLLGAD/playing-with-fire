@@ -120,10 +120,10 @@ let promise = new Promise(res => {
     wallImage.onload = add
     required++
 
-    barrelImage.onload = add
+    bombImage.onload = add
     required++
 
-    bombImage.onload = add
+    barrelImage.onload = add
     required++
 
     //fireImage.onload = add
@@ -148,8 +148,9 @@ function render() {
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "PLAYER":
-                ctx.fillStyle = "tomato";
-                ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                //ctx.fillStyle = "tomato";
+                //ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             default:
                 console.error("unkown type, this block doesnt exist in game", type);
@@ -170,7 +171,13 @@ export function updateObjects(objects) {
 
 export function removeObjects(objects) {
     objects.forEach(d => {
-        gameScene.splice(gameScene.findIndex(g => g.id === d.id), 1)
+        let playerTest = gameScene.splice(gameScene.findIndex(g => g.id === d.id), 1)
+        if(playerTest.type === "PLAYER"){
+            ctx.font = "30px Comic Sans MS";
+            ctx.fillStyle = "red";
+            ctx.textAlign = "center";
+            ctx.fillText("WASTED", canvasWidth/2, canvasHeight/2);
+        }
     })
 }
 

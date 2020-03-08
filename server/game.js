@@ -14,7 +14,7 @@ class Entity {
         this.pos = { x: 0, y: 0 }
         this.type = type
         this.id = id
-        this.isBlocking = false
+        this.isBlocking = true
 
         this.width = TILESIZE
         this.height = TILESIZE
@@ -34,7 +34,7 @@ class Player extends Entity {
         this.speed = 0.005
         this.lastBombPlace = null
         this.bombCooldown = 3000 // 3 Seconds
-        this.explodeTimer = 2000 // 2 Seconds
+        this.explodeTimer = 5000 // 2 Seconds
         this.maxBombs = 1
         this.pos = { x: 1, y: 1 }
 
@@ -54,6 +54,7 @@ class Fire extends Entity {
         super({ type: Entity.Types.FIRE, id })
         this.timeOut = timeout
         this.pos = pos
+        this.isBlocking = false
     }
 }
 
@@ -63,6 +64,7 @@ class Bomb extends Entity {
         this.owner = owner
         this.placedAt = Date.now()
         this.explodesAt = explodesAt
+        this.isBlocking = false
         this.pos = pos
     }
 }
@@ -122,14 +124,14 @@ class Game {
     }
 
     leaveGame(socket) {
-        this.sockets.splice(this.sockets.indexOf(socket), 1)
-         let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
+        let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
          if (player) {
              let message = JSON.stringify({ type: 'remove', data: [player.id] })
              this.sockets.forEach(p => {
                  p.send(message)
              })
          }
+        this.sockets.splice(this.sockets.indexOf(socket), 1)
     }
 
     // Start playing
@@ -141,7 +143,6 @@ class Game {
         if (space) {
             this.placeBomb(player)
         }
-
         let x = (player.pos.x + xdt * delta * player.speed)
         let y = (player.pos.y + ydt * delta * player.speed)
         let flooredX = Math.floor(player.pos.x)
@@ -149,11 +150,13 @@ class Game {
         let ceiledX = Math.ceil(player.pos.x)
         let ceiledY = Math.ceil(player.pos.y)
 
+        this.bombBlocker(player.pos, player)
+
         if (xdt > 0) {
             let blocktest = this.getBlockByPosition(flooredX + 1, ceiledY)
             let block = this.getBlockByPosition(flooredX + 1, flooredY) || this.getBlockByPosition(ceiledX + 1, flooredY)
-            if (!block || (block.isBlocking && player.pos.x + 1 < block.pos.x)) {
-                if (!block || Math.floor(x) < block.pos.x) {
+            if (!block || (block.isBlocking && player.pos.x + 1 < block.pos.x) || !block.isBlocking) {
+                if (!block || Math.floor(x) < block.pos.x || !block.isBlocking) {
                     player.pos.x = x
                 }
             } else {
@@ -180,8 +183,8 @@ class Game {
         } else if (xdt < 0) {
             let blocktest = this.getBlockByPosition(flooredX - 1, ceiledY)
             let block = this.getBlockByPosition(flooredX - 1, flooredY) || this.getBlockByPosition(ceiledX - 1, flooredY)
-            if (!block || (block.isBlocking && player.pos.x > block.pos.x + 1)) {
-                if (!block || Math.floor(x) > block.pos.x) {
+            if (!block || (block.isBlocking && player.pos.x > block.pos.x + 1) || !block.isBlocking) {
+                if (!block || Math.floor(x) > block.pos.x || !block.isBlocking) {
                     player.pos.x = x
                 }
             } else {
@@ -212,8 +215,8 @@ class Game {
             if (ydt > 0) {
                 let blocktest = this.getBlockByPosition(ceiledX, flooredY + 1)
                 let block = this.getBlockByPosition(flooredX, flooredY + 1) || this.getBlockByPosition(flooredX, ceiledY + 1)
-                if (!block || (block.isBlocking && player.pos.y + 1 < block.pos.y)) {
-                    if (!block || Math.floor(y) < block.pos.y) {
+                if (!block || (block.isBlocking && player.pos.y + 1 < block.pos.y) || !block.isBlocking) {
+                    if (!block || Math.floor(y) < block.pos.y || !block.isBlocking) {
                         player.pos.y = y
                     }
                 } else {
@@ -239,8 +242,8 @@ class Game {
             } else if (ydt < 0) {
                 let blocktest = this.getBlockByPosition(ceiledX, flooredY - 1)
                 let block = this.getBlockByPosition(flooredX, flooredY - 1) || this.getBlockByPosition(flooredX, ceiledY - 1)
-                if (!block || (block.isBlocking && player.pos.y > block.pos.y + 1)) {
-                    if (!block || Math.floor(y) > block.pos.y) {
+                if (!block || (block.isBlocking && player.pos.y > block.pos.y + 1) || !block.isBlocking) {
+                    if (!block || Math.floor(y) > block.pos.y || !block.isBlocking) {
                         player.pos.y = y
                     }
                 } else {
@@ -266,6 +269,29 @@ class Game {
             }
         }
         this.emitPlayerPos(player)
+    }
+
+    bombBlocker(pos, player){
+        let posx = Math.floor(pos.x)
+        let posy = Math.floor(pos.y)
+        let blockNorth, blockWest, blockEast, blockSouth
+
+        blockNorth = this.getBlockByPosition(posx, posy - 2)
+        if (blockNorth && blockNorth.type == "BOMB"){
+            blockNorth.isBlocking = true
+        }
+        blockSouth = this.getBlockByPosition(posx, posy + 2)
+        if (blockSouth && blockSouth.type == "BOMB"){
+            blockSouth.isBlocking = true
+        }
+        blockEast = this.getBlockByPosition(posx + 2, posy)
+        if (blockEast && blockEast.type == "BOMB"){
+            blockEast.isBlocking = true
+        }
+        blockWest = this.getBlockByPosition(posx - 2, posy)
+        if (blockWest && blockWest.type == "BOMB"){
+            blockWest.isBlocking = true
+        }
     }
 
     addEntity(entity) {
@@ -327,7 +353,7 @@ class Game {
                 }
                 for(let i = 1; i<4; i++){
                     let xhelp, yhelp
-                    for(let m = 0; m<3; m++){
+                    for(let m = 1; m<4; m++){
                         switch (i){
                         case (1):
                         //North 
