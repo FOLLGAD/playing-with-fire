@@ -11,7 +11,7 @@ class Socket {
     this.connect()
   }
   connect() {
-    let socket = new WebSocket(`ws://${window.location.host}/api`)
+    let socket = new WebSocket(`wss://${window.location.host}/api`)
     this.socket = new Promise(r => socket.onopen = () => r(socket))
     this.socket.then(s => s.onmessage = (msg) => {
       let { type, data } = JSON.parse(msg.data)

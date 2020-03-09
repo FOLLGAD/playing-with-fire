@@ -176,9 +176,11 @@ function render() {
                 }
                 break;
             case "PLAYER":
-                ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
-                //ctx.fillStyle = "tomato";
-                //ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                if (arrayItem.isAlive) {
+                    // ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                    ctx.fillStyle = "tomato";
+                    ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                }
                 break;
             default:
                 console.error("unkown type, this block doesnt exist in game", type);

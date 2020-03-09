@@ -1,5 +1,6 @@
 
 const TILESIZE = 1
+const GameScore = require('./models/GameScore')
 
 class Entity {
     static Types = {
@@ -14,7 +15,7 @@ class Entity {
         this.pos = { x: 0, y: 0 }
         this.type = type
         this.id = id
-        this.isBlocking = true
+        this.isBlocking = false
 
         this.width = TILESIZE
         this.height = TILESIZE
@@ -25,19 +26,20 @@ class Entity {
 }
 
 class Player extends Entity {
-    // Username is the database's username of that player
     constructor({ socket, id }) {
         super({ type: Entity.Types.PLAYER, id })
         this.socket = socket
 
         this.lastInput = null
         this.speed = 0.005
+        this.maxBombs = 1
+        this.fireLength = 3
         this.lastBombPlace = null
         this.bombCooldown = 3000 // 3 Seconds
-        this.explodeTimer = 5000 // 2 Seconds
-        this.maxBombs = 1
+        this.explodeTimer = 2000
         this.pos = { x: 1, y: 1 }
-
+        this.diedAt = null
+        this.isAlive = true
     }
 }
 
@@ -98,11 +100,14 @@ class Powerup extends Entity {
         this.pos = pos
         this.powerupType = powerupType
     }
+    getData() {
+        return { type: this.type, pos: this.pos, id: this.id, powerupType: this.powerupType }
+    }
 }
 
 class Game {
     constructor(gameid) {
-        this.sockets = []
+        this.players = []
         this.entities = []
         this.idCounter = 10
         this.id = gameid
@@ -114,24 +119,37 @@ class Game {
     }
 
     joinGame(socket) {
-        if (this.sockets.indexOf(socket) !== -1) {
+        if (this.players.find(d => d.socket === socket)) {
             throw new Error("Already joined")
         }
         let player = new Player({ id: this.nextId(), socket })
         this.entities.push(player)
-        this.sockets.push(socket)
+        this.players.push({ socket, username: socket.username, player: player.id, diedAt: null })
         return player
     }
 
+    killPlayer(player) {
+        let p = this.players.find(p => p.player === player.id)
+        p.diedAt = player.diedAt = Date.now()
+        player.isAlive = false
+    }
+
     leaveGame(socket) {
-        let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
-         if (player) {
-             let message = JSON.stringify({ type: 'remove', data: [player.id] })
-             this.sockets.forEach(p => {
-                 p.send(message)
-             })
-         }
-        this.sockets.splice(this.sockets.indexOf(socket), 1)
+        // let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
+        //  if (player) {
+        //      let message = JSON.stringify({ type: 'remove', data: [player.id] })
+        //      this.sockets.forEach(p => {
+        //          p.send(message)
+        //      })
+        //  }
+        let p = this.players.find(p => p.socket === socket)
+        if (p) {
+            p.socket = null
+        }
+    }
+
+    connections() {
+        return this.players.map(p => p.socket).filter(s => s)
     }
 
     // Start playing
@@ -140,9 +158,12 @@ class Game {
     }
 
     movePlayer(player, { delta, xdt, ydt, space }) {
+        if (!player.isAlive) return;
+
         if (space) {
             this.placeBomb(player)
         }
+
         let x = (player.pos.x + xdt * delta * player.speed)
         let y = (player.pos.y + ydt * delta * player.speed)
         let flooredX = Math.floor(player.pos.x)
@@ -271,25 +292,25 @@ class Game {
         this.emitPlayerPos(player)
     }
 
-    bombBlocker(pos, player){
+    bombBlocker(pos, player) {
         let posx = Math.floor(pos.x)
         let posy = Math.floor(pos.y)
         let blockNorth, blockWest, blockEast, blockSouth
 
         blockNorth = this.getBlockByPosition(posx, posy - 2)
-        if (blockNorth && blockNorth.type == "BOMB"){
+        if (blockNorth && blockNorth.type == "BOMB") {
             blockNorth.isBlocking = true
         }
         blockSouth = this.getBlockByPosition(posx, posy + 2)
-        if (blockSouth && blockSouth.type == "BOMB"){
+        if (blockSouth && blockSouth.type == "BOMB") {
             blockSouth.isBlocking = true
         }
         blockEast = this.getBlockByPosition(posx + 2, posy)
-        if (blockEast && blockEast.type == "BOMB"){
+        if (blockEast && blockEast.type == "BOMB") {
             blockEast.isBlocking = true
         }
         blockWest = this.getBlockByPosition(posx - 2, posy)
-        if (blockWest && blockWest.type == "BOMB"){
+        if (blockWest && blockWest.type == "BOMB") {
             blockWest.isBlocking = true
         }
     }
@@ -298,8 +319,8 @@ class Game {
         this.entities.push(entity)
 
         let message = JSON.stringify({ type: 'update', data: [entity.getData()] })
-        
-        this.sockets.forEach(s => s.send(message))
+
+        this.players.forEach(p => p.socket && p.socket.send(message))
     }
 
     placeBomb(player) {
@@ -320,9 +341,7 @@ class Game {
     emitPlayerPos(player) {
         const msg = JSON.stringify({ type: 'update', data: [player.getData()] })
 
-        this.sockets.forEach(p => {
-            p.send(msg)
-        })
+        this.players.forEach(p => p.socket && p.socket.send(msg))
     }
 
     tick() {
@@ -334,15 +353,16 @@ class Game {
                 let x = Math.floor(element.pos.x)
                 let y = Math.floor(element.pos.y)
                 this.removeEntity(element)
+                let bombOwner = this.entities.find(player => (element.owner === player.id))
                 //East and center
-                for (let i = 0; i < 4; i++) {
+                for (let i = 0; i < bombOwner.fireLength; i++) {
                     let block = this.getBlockByPosition(x + i, y)
                     if (block && block.type === "WALL") {
                         break;
                     } else if (block && block.type === "BARREL") {
                         this.removeEntity(block)
-                        if(block.powerup){
-                            let power = new Powerup({ id: this.nextId, pos: block.pos, powerupType: block.powerup })
+                        if (block.powerup) {
+                            let power = new Powerup({ id: this.nextId(), pos: block.pos, powerupType: block.powerup })
                             this.addEntity(power)
                         }
                         let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
@@ -355,39 +375,37 @@ class Game {
                         setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                     }
                 }
-                for(let i = 1; i<4; i++){
+                for (let i = 1; i < bombOwner.fireLength + 1; i++) {
                     let xhelp, yhelp
-                    for(let m = 1; m<4; m++){
-                        switch (i){
-                        case (1):
-                        //North 
-                        xhelp = x
-                        yhelp= y - m
-                          break;
-                        case (2):
-                        //West
-                        xhelp = x - m
-                        yhelp = y
-                          break;
-                        case (3):
-                        //South
-                        xhelp = x
-                        yhelp = y + m
-                          break;
-                        default:
-                            console.error("Unknown direction for fire")
-                        }  
-                        
-            
+                    for (let m = 1; m < bombOwner.fireLength; m++) {
+                        switch (i) {
+                            case (1):
+                                //North 
+                                xhelp = x
+                                yhelp = y - m
+                                break;
+                            case (2):
+                                //West
+                                xhelp = x - m
+                                yhelp = y
+                                break;
+                            case (3):
+                                //South
+                                xhelp = x
+                                yhelp = y + m
+                                break;
+                            default:
+                                console.error("Unknown direction for fire")
+                        }
+
+
                         let block = this.getBlockByPosition(xhelp, yhelp)
                         if (block && block.type === "WALL") {
                             break;
                         } else if (block && block.type === "BARREL") {
                             this.removeEntity(block)
-                            if(block.powerup){
-                                let power = new Powerup({ id: this.nextId, pos: block.pos, powerupType: block.powerup })
-                                let str = JSON.stringify({power})
-                                console.log(power)
+                            if (block.powerup) {
+                                let power = new Powerup({ id: this.nextId(), pos: block.pos, powerupType: block.powerup })
                                 this.addEntity(power)
                             }
                             let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
@@ -399,37 +417,45 @@ class Game {
                             this.addEntity(fire)
                             setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                         }
-                    } 
+                    }
                 }
             });
-        
+
 
         this.entities
             .filter(elem => elem.type === Entity.Types.PLAYER)
             .forEach(player => {
-                let x = Math.floor(player.pos.x)
-                let y = Math.floor(player.pos.y)
-
                 this.entities
-                .filter(elem => elem.type === Entity.Types.POWERUP)
-                .forEach(powerup => { 
-                   if(powerup.pos.x === x && powerup.pos.y === y){
-                       console.log("Powerup added!")
-                   }else if((player.pos.x > powerup.pos.x - 1 && player.pos.x < powerup.pos.x) && y === powerup.pos.y){
-                       console.log("Powerup added!")
-                   }else if((player.pos.y > powerup.pos.y - 1 && player.pos.y < powerup.pos.y) && x === powerup.pos.x){
-                       console.log("Powerup added!")
-                   }
-                });
-                
+                    .filter(elem => elem.type === Entity.Types.POWERUP)
+                    .forEach(powerup => {
+                        if (powerup.pos.x < player.pos.x + 1 && powerup.pos.x + 1 > player.pos.x &&
+                            powerup.pos.y < player.pos.y + 1 && powerup.pos.y + 1 > player.pos.y) {
+                            this.removeEntity(powerup)
+                            switch (powerup.powerupType) {
+                                case ("BOMBS"):
+                                    player.maxBombs += 1
+                                    break;
+                                case ("SPEED"):
+                                    player.speed += 0.001
+                                    break;
+                                case ("EXPLOSION"):
+                                    player.fireLength += 1
+                                    break;
+                            }
+                        }
+                    });
+
                 this.entities
                     .filter(elem => elem.type === Entity.Types.FIRE)
                     .forEach(fireBlock => {
-                        if (((fireBlock.pos.x === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x - 1 === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x === x) && (fireBlock.pos.y - 1 === y))) {
-                            this.leaveGame(player.socket)
+                        // Check if player collides with fire
+                        let safeZone = 0.3
+                        if (fireBlock.pos.x < player.pos.x + 1 - safeZone && fireBlock.pos.x + 1 - safeZone > player.pos.x &&
+                            fireBlock.pos.y < player.pos.y + 1 - safeZone && fireBlock.pos.y + 1 - safeZone > player.pos.y) {
+                            this.killPlayer(player)
                         }
                     });
-                });
+            });
     }
 
     removeEntity(entityToRemove) {
@@ -441,7 +467,7 @@ class Game {
             }
 
             let message = JSON.stringify({ type: 'delete', data: [entity.getData()] })
-            this.sockets.forEach(s => s.send(message))
+            this.players.forEach(s => s.socket && s.socket.send(message))
         }
     }
 
@@ -464,21 +490,17 @@ class Game {
             if (!(i % 2) || i === 0 || i == (rowsNum - 1)) {
                 for (let m = 0; m < columnsNum; m++) {
                     if (!(m % 2) || m === 0 || m == (columnsNum - 1)) {
-                        let wall = new Wall({ id: this.idCounter, pos: { x: m, y: i } })
-                        this.nextId()
+                        let wall = new Wall({ id: this.nextId(), pos: { x: m, y: i } })
                         this.addEntity(wall)
                     } else if (i === 0 || i == (rowsNum - 1)) {
-                        let wall = new Wall({ id: this.idCounter, pos: { x: m, y: i } })
-                        this.nextId()
+                        let wall = new Wall({ id: this.nextId(), pos: { x: m, y: i } })
                         this.addEntity(wall)
                     }
                 }
             } else {
-                let wall = new Wall({ id: this.idCounter, pos: { x: 0, y: i } })
-                this.nextId()
+                let wall = new Wall({ id: this.nextId(), pos: { x: 0, y: i } })
                 this.addEntity(wall)
-                wall = new Wall({ id: this.idCounter, pos: { x: columnsNum - 1, y: i } })
-                this.nextId()
+                wall = new Wall({ id: this.nextId(), pos: { x: columnsNum - 1, y: i } })
                 this.addEntity(wall)
             }
         }
@@ -491,8 +513,7 @@ class Game {
             for (let m = 2; m < columnsNum - 2; m++) {
                 if (!(m % 2 === 0 && i % 2 === 0)) {
                     if (this.procentageChance(50)) {
-                        let barrel = new Barrel({ id: this.idCounter, pos: { x: m, y: i } })
-                        this.nextId()
+                        let barrel = new Barrel({ id: this.nextId(), pos: { x: m, y: i } })
                         this.addEntity(barrel)
                     }
                 }
@@ -504,6 +525,19 @@ class Game {
     getBlockByPosition(x, y) {
         let block = this.entities.find(block => ((block.pos.x === x) && (block.pos.y === y)))
         return block
+    }
+
+    async finished(gameID) {
+        // Add to gamescore
+        let players = this.entities.filter(element => element.type === "PLAYER")
+        for (let i = 1; i < players.length + 1; i++) {
+            let highestValue = Math.max.apply(Math,players.map(function(o){return o.diedAt;}))
+            let highestleft = players.find(function(o){ return o.diedAt == res; })
+            players.splice(this.entities.findIndex(g => players.id === highestleft.id), 1)
+            
+            const storedGame = await GameScore.create({ gameid: gameID, placement: i, totalPlayers: players.length, at: Date.now() });
+        }
+        this.destroy()
     }
 
     // Stop playing (game ended)
@@ -518,7 +552,11 @@ class Game {
     }
 
     getData() {
-        return { entities: this.entities.map(e => e.getData()), id: this.id }
+        return {
+            entities: this.entities.map(e => e.getData()),
+            players: this.players.map(p => ({ username: p.username, id: p.id, diedAt: p.diedAt })),
+            id: this.id,
+        }
     }
 }
 

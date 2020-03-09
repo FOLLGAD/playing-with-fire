@@ -8,8 +8,10 @@ class GameScore extends Model {
 
 }
 GameScore.init({
-    username: { type: DataTypes.STRING, allowNull: false, primaryKey: true },
-    password: { type: DataTypes.STRING, allowNull: false },
+    gameid: { type: DataTypes.NUMBER, allowNull: false },
+    placement: { type: DataTypes.NUMBER, allowNull: false },
+    totalPlayers: { type: DataTypes.NUMBER, allowNull: false },
+    at: { type: DataTypes.DATE, allowNull: false }
 }, { sequelize, modelName: "GameScore" })
 
 module.exports = GameScore

@@ -11,7 +11,7 @@ const fs = require('fs')
 const User = require('./models/User')
 const GameScore = require('./models/GameScore')
 
-const { Game, Player } = require('./game')
+const { Game } = require('./game')
 
 // Loads the options from the .env file into process.env.{SETTING}
 require('dotenv').config()
@@ -26,7 +26,7 @@ const app = express()
 const appCookieParser = cookieParser(process.env.cookieSecret)
 app.use(appCookieParser)
 app.use(bodyParser.json())
-app.use(cors({ origin: false, credentials: true }))
+app.use(cors({ origin: "http://localhost:8000" }))
 const cookieOptions = { signed: true, httpOnly: true, sameSite: true }
 
 const httpsOptions = {
@@ -47,10 +47,11 @@ const wss = new WebSocket.Server({
             try {
                 const sc = info.req.signedCookies['session-cookie']
 
-                authenticate(sc)
+                authenticate(sc, info.req.connection.remoteAddress)
 
                 next(true)
             } catch (error) {
+                console.log(error)
                 next(false)
             }
         })
@@ -59,7 +60,7 @@ const wss = new WebSocket.Server({
 
 wss.on('connection', (ws, req) => {
     const sc = req.signedCookies['session-cookie']
-    ws.username = authenticate(sc)
+    ws.username = authenticate(sc, req.connection.remoteAddress)
 
     let currentGame = null
     let currentPlayer = null
@@ -69,10 +70,10 @@ wss.on('connection', (ws, req) => {
         ws.send(JSON.stringify({ type, data }))
     }
 
-    let leaveGame = () => {
+    let leaveGame = async () => {
         if (currentGame) {
             currentGame.leaveGame(ws)
-            if (currentGame.sockets.length === 0) {
+            if (currentGame.connections().length === 0) {
                 currentGame.destroy()
                 games.delete(currentGame.id)
             }
@@ -139,7 +140,7 @@ const sessions = new Map()
 
 const authMiddleware = (req, res, next) => {
     try {
-        const auth = authenticate(req.signedCookies['session-cookie'])
+        const auth = authenticate(req.signedCookies['session-cookie'], req.connection.remoteAddress)
         req.user = auth.username
         next()
     } catch (error) {
@@ -147,7 +148,7 @@ const authMiddleware = (req, res, next) => {
     }
 }
 
-const authenticate = cookie => {
+const authenticate = (cookie, ip) => {
     if (sessions.has(cookie)) {
         const session = sessions.get(cookie)
         let fiveDays = 1000 * 60 * 60 * 24 * 5
@@ -156,6 +157,10 @@ const authenticate = cookie => {
         if (session.at + fiveDays < Date.now()) {
             sessions.delete(cookie)
             throw new Error("Cookie expired")
+        }
+
+        if (session.ip !== ip) {
+            throw new Error("Calling from wrong IP address")
         }
 
         return session.username
@@ -171,7 +176,7 @@ const auth = express.Router()
         try {
             const foundUser = await User.findUser(username, password)
             const newUuid = uuid.v4()
-            sessions.set(newUuid, { username: foundUser.username, at: Date.now() })
+            sessions.set(newUuid, { username: foundUser.username, at: Date.now(), ip: req.ip })
             res.cookie('session-cookie', newUuid, cookieOptions)
             res.status(200).json({ username: foundUser.username })
         } catch (error) {
