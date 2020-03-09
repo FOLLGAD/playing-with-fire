@@ -1,9 +1,10 @@
 const { Sequelize } = require('sequelize')
+const path = require('path')
 
 // Connect Sequelize to our SQLite database
 const sequelize = new Sequelize({
     dialect: 'sqlite',
-    storage: '../../db.sqlite',
+    storage: path.join(__dirname, '../../db.sqlite'),
     define: { freezeTableName: true },
     logging: false, // Disable startup SQL logging
 })
