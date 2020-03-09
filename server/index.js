@@ -1,11 +1,12 @@
 const WebSocket = require('ws')
-const http = require('http')
+const https = require('https')
 const express = require('express')
 const path = require('path')
 const uuid = require('uuid')
 const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const cors = require('cors')
+const fs = require('fs')
 
 const User = require('./models/User')
 const GameScore = require('./models/GameScore')
@@ -28,8 +29,13 @@ app.use(bodyParser.json())
 app.use(cors({ origin: false, credentials: true }))
 const cookieOptions = { signed: true, httpOnly: true, sameSite: true }
 
-// Create HTTP server using express
-const server = http.createServer(app)
+const httpsOptions = {
+    key: fs.readFileSync(path.join(__dirname,'../tls/key.pem')),
+    cert: fs.readFileSync(path.join(__dirname,'../tls/cert.pem')),
+}
+
+// Create HTTPS server using the express app
+const server = https.createServer(httpsOptions, app)
 
 const games = new Map()
 
