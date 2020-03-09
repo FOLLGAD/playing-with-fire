@@ -298,7 +298,7 @@ class Game {
         this.entities.push(entity)
 
         let message = JSON.stringify({ type: 'update', data: [entity.getData()] })
-
+        
         this.sockets.forEach(s => s.send(message))
     }
 
@@ -341,6 +341,10 @@ class Game {
                         break;
                     } else if (block && block.type === "BARREL") {
                         this.removeEntity(block)
+                        if(block.powerup){
+                            let power = new Powerup({ id: this.nextId, pos: block.pos, powerupType: block.powerup })
+                            this.addEntity(power)
+                        }
                         let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
                         this.addEntity(fire)
                         setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
@@ -380,6 +384,12 @@ class Game {
                             break;
                         } else if (block && block.type === "BARREL") {
                             this.removeEntity(block)
+                            if(block.powerup){
+                                let power = new Powerup({ id: this.nextId, pos: block.pos, powerupType: block.powerup })
+                                let str = JSON.stringify({power})
+                                console.log(power)
+                                this.addEntity(power)
+                            }
                             let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
                             this.addEntity(fire)
                             setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
@@ -392,21 +402,34 @@ class Game {
                     } 
                 }
             });
-        // Go through all players
+        
 
         this.entities
-            .filter(elem => elem.type === Entity.Types.FIRE)
-            .forEach(fireBlock => {
-            this.entities
-                .filter(elem => elem.type === Entity.Types.PLAYER)
-                .forEach(player => {
-                    let x = Math.floor(player.pos.x)
-                    let y = Math.floor(player.pos.y)
-                    if (((fireBlock.pos.x === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x - 1 === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x === x) && (fireBlock.pos.y - 1 === y))) {
-                        this.leaveGame(player.socket)
-                    }
+            .filter(elem => elem.type === Entity.Types.PLAYER)
+            .forEach(player => {
+                let x = Math.floor(player.pos.x)
+                let y = Math.floor(player.pos.y)
+
+                this.entities
+                .filter(elem => elem.type === Entity.Types.POWERUP)
+                .forEach(powerup => { 
+                   if(powerup.pos.x === x && powerup.pos.y === y){
+                       console.log("Powerup added!")
+                   }else if((player.pos.x > powerup.pos.x - 1 && player.pos.x < powerup.pos.x) && y === powerup.pos.y){
+                       console.log("Powerup added!")
+                   }else if((player.pos.y > powerup.pos.y - 1 && player.pos.y < powerup.pos.y) && x === powerup.pos.x){
+                       console.log("Powerup added!")
+                   }
                 });
-            });
+                
+                this.entities
+                    .filter(elem => elem.type === Entity.Types.FIRE)
+                    .forEach(fireBlock => {
+                        if (((fireBlock.pos.x === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x - 1 === x) && (fireBlock.pos.y === y)) || ((fireBlock.pos.x === x) && (fireBlock.pos.y - 1 === y))) {
+                            this.leaveGame(player.socket)
+                        }
+                    });
+                });
     }
 
     removeEntity(entityToRemove) {

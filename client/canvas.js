@@ -147,6 +147,22 @@ function render() {
             case "FIRE":
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
+            case "POWERUP":
+                switch (arrayItem.powerupType){
+                    case "SPEED":
+                        ctx.fillStyle = "#33F8FF"
+                        ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        break;
+                    case "EXPLOSION":
+                        ctx.fillStyle = "#50FF33"
+                        ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        break;
+                    case "BOMBS":
+                        ctx.fillStyle = "#FF33F5"
+                        ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        break;
+                }
+                break;
             case "PLAYER":
                 ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 //ctx.fillStyle = "tomato";
@@ -161,9 +177,11 @@ function render() {
 export function updateObjects(objects) {
     objects.forEach(d => {
         let found = gameScene.find(g => g.id === d.id)
+        console.log(JSON.stringify({d}))
         if (found) {
             Object.assign(found, d)
         } else {
+            console.log("YOU SHOULD SEE ME")
             gameScene.push(d)
         }
     })
