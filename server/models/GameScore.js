@@ -9,6 +9,7 @@ class GameScore extends Model {
 }
 GameScore.init({
     gameid: { type: DataTypes.NUMBER, allowNull: false },
+    username: { type: DataTypes.STRING, allowNull: false, primaryKey: true },
     placement: { type: DataTypes.NUMBER, allowNull: false },
     totalPlayers: { type: DataTypes.NUMBER, allowNull: false },
     at: { type: DataTypes.DATE, allowNull: false }
