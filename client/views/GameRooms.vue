@@ -13,7 +13,6 @@
 </template>
 
 <script>
-import gameCanvas from "../canvas.js";
 export default {
   name: "Booking",
   components: {},

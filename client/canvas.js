@@ -98,45 +98,58 @@ const barrelImage = new Image()
 barrelImage.src = '/assets/barrel.PNG'
 
 const bombImage = new Image()
-bombImage.src = '/assets/bomb.PNG'
+bombImage.src = '/assets/dynamite.png'
 
 const backgroundImage = new Image()
 backgroundImage.src = '/assets/background.PNG'
 
-//const fireImage = new Image()
-//backgroundImage.src = '/assets/fire.PNG'
+const fireImage = new Image()
+fireImage.src = '/assets/fire.png'
+
+const shoesImage = new Image()
+shoesImage.src = '/assets/shoe.png'
 
 let promise = new Promise(res => {
     let done = 0, required = 0
 
-    let add = function () {
-        done++
-        if (done >= required) res()
+    let addImg = function (img) {
+        required++
+        img.onload = () => {
+            done++
+            if (done >= required) res()
+        }
+        img.onerror = () => {
+            console.error("Image didnt load successfully:", img.src)
+            img.onload()
+        }
     }
 
-    backgroundImage.onload = add
-    required++
-
-    wallImage.onload = add
-    required++
-
-    bombImage.onload = add
-    required++
-
-    barrelImage.onload = add
-    required++
-
-    //fireImage.onload = add
-    //required++
+    addImg(backgroundImage)
+    addImg(wallImage)
+    addImg(bombImage)
+    addImg(barrelImage)
+    addImg(fireImage)
+    addImg(shoesImage)
 })
 
 function render() {
+    ctx.beginPath()
+    ctx.fillStyle = "#cdb99d"
+    ctx.strokeStyle = "#111"
+    ctx.lineWidth = 3
+    gameScene
+        .filter(g => g.type === "WALL")
+        .forEach(g => {
+            ctx.rect(tileSize * g.pos.x, tileSize * g.pos.y, tileSize, tileSize)
+        })
+    ctx.fill()
+    ctx.stroke()
+
     gameScene.forEach(function (arrayItem) {
         var type = arrayItem.type;
         var position = arrayItem.pos;
         switch (type) {
             case "WALL":
-                ctx.drawImage(wallImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "BARREL":
                 ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
@@ -145,13 +158,12 @@ function render() {
                 ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "FIRE":
-                ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                ctx.drawImage(fireImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                 break;
             case "POWERUP":
-                switch (arrayItem.powerupType){
+                switch (arrayItem.powerupType) {
                     case "SPEED":
-                        ctx.fillStyle = "#33F8FF"
-                        ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        ctx.drawImage(shoesImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                         break;
                     case "EXPLOSION":
                         ctx.fillStyle = "#50FF33"
@@ -177,11 +189,9 @@ function render() {
 export function updateObjects(objects) {
     objects.forEach(d => {
         let found = gameScene.find(g => g.id === d.id)
-        console.log(JSON.stringify({d}))
         if (found) {
             Object.assign(found, d)
         } else {
-            console.log("YOU SHOULD SEE ME")
             gameScene.push(d)
         }
     })
@@ -190,11 +200,11 @@ export function updateObjects(objects) {
 export function removeObjects(objects) {
     objects.forEach(d => {
         let playerTest = gameScene.splice(gameScene.findIndex(g => g.id === d.id), 1)
-        if(playerTest.type === "PLAYER"){
+        if (playerTest.type === "PLAYER") {
             ctx.font = "30px Comic Sans MS";
             ctx.fillStyle = "red";
             ctx.textAlign = "center";
-            ctx.fillText("WASTED", canvasWidth/2, canvasHeight/2);
+            ctx.fillText("WASTED", canvasWidth / 2, canvasHeight / 2);
         }
     })
 }
@@ -206,13 +216,13 @@ export function initializeMap(scene) {
 
 export function draw() {
     if (!rendering) return;
-    
+
     ctx.clearRect(0, 0, canvasWidth, canvasHeight)
-    
+
     let pattern = ctx.createPattern(backgroundImage, 'repeat')
     ctx.fillStyle = pattern
     ctx.fillRect(0, 0, canvasWidth, canvasHeight);
-    
+
     render();
     window.requestAnimationFrame(draw)
 }
