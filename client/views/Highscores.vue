@@ -1,8 +1,11 @@
 <template>
   <div style="text-align: center">
-      <span>test</span>
-    <div v-for="score in list" :key="score.id">
-    </div>
+    <h3>Highscores:</h3>
+      <div v-for="(score, index) in list" :key="score.id">
+        <h4>
+          <span>{{index + 1}}.{{ "" + score.username + " Wins:" + score.count}}</span>
+        </h4>
+      </div>
   </div>
 </template>
 
@@ -14,6 +17,14 @@ export default {
     list: []
   }),
   methods: {
-  }
+  },
+  created() {
+    fetch('/api/highscores')
+      .then(res => res.json())
+      .then((data) => {
+        this.list = data.list;
+      })
+      .catch(console.error);
+  },
 };
 </script>

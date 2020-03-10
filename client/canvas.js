@@ -109,6 +109,12 @@ fireImage.src = '/assets/fire.png'
 const shoesImage = new Image()
 shoesImage.src = '/assets/shoe.png'
 
+const lightningImage = new Image()
+lightningImage.src = '/assets/lightning.png'
+
+const extrabombImage = new Image()
+extrabombImage.src = '/assets/extrabomb.png'
+
 let promise = new Promise(res => {
     let done = 0, required = 0
 
@@ -123,7 +129,8 @@ let promise = new Promise(res => {
             img.onload()
         }
     }
-
+    addImg(extrabombImage)
+    addImg(lightningImage)
     addImg(backgroundImage)
     addImg(wallImage)
     addImg(bombImage)
@@ -166,12 +173,10 @@ function render() {
                         ctx.drawImage(shoesImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                         break;
                     case "EXPLOSION":
-                        ctx.fillStyle = "#50FF33"
-                        ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        ctx.drawImage(lightningImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                         break;
                     case "BOMBS":
-                        ctx.fillStyle = "#FF33F5"
-                        ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        ctx.drawImage(extrabombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
                         break;
                 }
                 break;

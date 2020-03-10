@@ -8,8 +8,10 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const fs = require('fs')
 const csp = require('helmet-csp')
+const sequelize = require('sequelize')
 
 const User = require('./models/User')
+const GameScore = require('./models/GameScore')
 
 const { Game } = require('./game')
 
@@ -244,6 +246,22 @@ const auth = express.Router()
     .get('/games', authMiddleware, async (req, res) => {
         console.log(games)
         res.status(200).json({ list: Array.from(games.values()).map(g => g.getData()) })
+    })
+    .get('/highscores', async (req, res) => {
+        console.log("Highscore access")
+        await GameScore.findAll({
+            attributes: ['username', [sequelize.fn('count', sequelize.col('username')), 'count']],
+            group : ['gameScore.username'],
+            limit: 10,
+            where: {
+                placement: 1
+              },
+            raw: true,
+            order: sequelize.literal('count DESC')
+          }).then((winners) => {
+            console.table(winners)
+            res.status(200).json({ list: winners})
+          });
     })
 
 app.use('/api', auth)
