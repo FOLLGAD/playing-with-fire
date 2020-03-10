@@ -361,10 +361,6 @@ class Game {
                         break;
                     } else if (block && block.type === "BARREL") {
                         this.removeEntity(block)
-                        if (block.powerup) {
-                            let power = new Powerup({ id: this.nextId(), pos: block.pos, powerupType: block.powerup })
-                            this.addEntity(power)
-                        }
                         let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
                         this.addEntity(fire)
                         setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
@@ -404,10 +400,7 @@ class Game {
                             break;
                         } else if (block && block.type === "BARREL") {
                             this.removeEntity(block)
-                            if (block.powerup) {
-                                let power = new Powerup({ id: this.nextId(), pos: block.pos, powerupType: block.powerup })
-                                this.addEntity(power)
-                            }
+              
                             let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
                             this.addEntity(fire)
                             setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
