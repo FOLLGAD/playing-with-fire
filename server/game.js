@@ -39,7 +39,6 @@ class Player extends Entity {
         this.explodeTimer = 2000
         this.pos = { x: 1, y: 1 }
         this.diedAt = null
-        this.isAlive = true
     }
 }
 
@@ -130,8 +129,13 @@ class Game {
 
     killPlayer(player) {
         let p = this.players.find(p => p.player === player.id)
-        p.diedAt = player.diedAt = Date.now()
-        player.isAlive = false
+        p.diedAt = Date.now()
+        this.removeEntity(player)
+        let playersLeft = this.players.filter(p => p.diedAt == null)
+        if (playersLeft.length === 0) {
+            this.finished()
+        }
+
     }
 
     leaveGame(socket) {
@@ -157,8 +161,9 @@ class Game {
         this.interval = setInterval(this.tick, 1000 / 30)
     }
 
-    movePlayer(player, { delta, xdt, ydt, space }) {
-        if (!player.isAlive) return;
+    movePlayer(socket, { delta, xdt, ydt, space }) {
+        let player = this.entities.find(t => t.type === "PLAYER" && t.socket === socket)
+        if (!player) return;
 
         if (space) {
             this.placeBomb(player)
@@ -459,7 +464,7 @@ class Game {
                 this.addEntity(new Powerup({ id: this.nextId(), powerupType: entity.powerup, pos: { x: entity.pos.x, y: entity.pos.y } }))
             }
 
-            let message = JSON.stringify({ type: 'delete', data: [entity.getData()] })
+            let message = JSON.stringify({ type: 'delete', data: [entity.id] })
             this.players.forEach(s => s.socket && s.socket.send(message))
         }
     }
@@ -520,16 +525,19 @@ class Game {
         return block
     }
 
-    async finished(gameID) {
-        // Add to gamescore
-        let players = this.entities.filter(element => element.type === "PLAYER")
-        for (let i = 1; i < players.length + 1; i++) {
-            let highestValue = Math.max.apply(Math,players.map(function(o){return o.diedAt;}))
-            let highestleft = players.find(function(o){ return o.diedAt == res; })
-            players.splice(this.entities.findIndex(g => players.id === highestleft.id), 1)
-            
-            const storedGame = await GameScore.create({ gameid: gameID, placement: i, totalPlayers: players.length, at: Date.now() });
-        }
+    async finished() {
+        let players = this.players.sort((a, b) => a.diedAt < b.diedAt)
+        players.forEach(async (player, index) => {
+            let newGameScore = {
+                username: player.username,
+                gameid: this.id,
+                placement: index + 1,
+                totalPlayers: players.length,
+                at: Date.now(),
+            }
+            await GameScore.create(newGameScore)
+        })
+
         this.destroy()
     }
 

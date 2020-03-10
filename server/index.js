@@ -7,9 +7,9 @@ const cookieParser = require('cookie-parser')
 const bodyParser = require('body-parser')
 const cors = require('cors')
 const fs = require('fs')
+const csp = require('helmet-csp')
 
 const User = require('./models/User')
-const GameScore = require('./models/GameScore')
 
 const { Game } = require('./game')
 
@@ -23,21 +23,60 @@ if (!process.env.cookieSecret) {
 const PORT = process.env.PORT || 5000
 
 const app = express()
+app.use(cors({ origin: "https://localhost:8000" }))
+
 const appCookieParser = cookieParser(process.env.cookieSecret)
+
 app.use(appCookieParser)
 app.use(bodyParser.json())
-app.use(cors({ origin: "http://localhost:8000" }))
+
+app.use(csp({
+    directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-eval'", "'unsafe-inline'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        fontSrc: ["'self'"],
+        imgSrc: ["'self'"],
+        connectSrc: ["'self'"], // Websockets
+        // sandbox: ['allow-forms', 'allow-scripts'],
+        reportUri: '/report-violation',
+        objectSrc: ["'self'"],
+        upgradeInsecureRequests: true,
+        workerSrc: false  // This is not set.
+    },
+    loose: false,
+    reportOnly: false,
+    setAllHeaders: false,
+    disableAndroid: false,
+    browserSniff: true
+}))
 const cookieOptions = { signed: true, httpOnly: true, sameSite: true }
 
 const httpsOptions = {
-    key: fs.readFileSync(path.join(__dirname,'../tls/key.pem')),
-    cert: fs.readFileSync(path.join(__dirname,'../tls/cert.pem')),
+    key: fs.readFileSync(path.join(__dirname, '../tls/key.pem')),
+    cert: fs.readFileSync(path.join(__dirname, '../tls/cert.pem')),
 }
 
 // Create HTTPS server using the express app
 const server = https.createServer(httpsOptions, app)
 
 const games = new Map()
+
+// Predefined violation handler.
+// app.post(
+//     '/report-violation',
+//     // bodyparser.json({
+//     //   type: ['json', 'application/csp-report']
+//     // }),
+//     (req, res) => {
+//         if (req.body) {
+//             console.log('csp violation: ', req.body)
+//         } else {
+//             console.log('csp violation: no data received!')
+//         }
+//         res.status(204).end()
+//     }
+// )
 
 // Create websocket server
 const wss = new WebSocket.Server({
@@ -63,7 +102,6 @@ wss.on('connection', (ws, req) => {
     ws.username = authenticate(sc, req.connection.remoteAddress)
 
     let currentGame = null
-    let currentPlayer = null
 
     // Wrapper to send JSON messages with ws.sendMsg(type, data)
     ws.sendMsg = (type, data) => {
@@ -78,7 +116,6 @@ wss.on('connection', (ws, req) => {
                 games.delete(currentGame.id)
             }
             currentGame = null
-            currentPlayer = null
         }
     }
 
@@ -90,16 +127,14 @@ wss.on('connection', (ws, req) => {
         // TODO: Add route for game list updates (gameRoomUpdate)
         // TODO: Leave games
         if (type === 'input') {
-            if (currentPlayer) {
-                currentGame.movePlayer(currentPlayer, data)
-            }
+            currentGame.movePlayer(ws, data)
         } else if (type === 'game-info') {
             ws.send(JSON.stringify({ type: 'new-game', data: currentGame.getData() }))
         } else if (type === 'create-game') {
             const gameid = uuid.v4()
             const game = new Game(gameid)
 
-            currentPlayer = game.joinGame(ws)
+            game.joinGame(ws)
 
             games.set(gameid, game)
 
@@ -118,7 +153,7 @@ wss.on('connection', (ws, req) => {
                 if (currentGame && currentGame.id !== g.id) {
                     currentGame.leaveGame(ws)
                 } else if (!currentGame) {
-                    currentPlayer = g.joinGame(ws)
+                    g.joinGame(ws)
                 }
 
                 currentGame = g
