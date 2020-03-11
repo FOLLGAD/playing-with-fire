@@ -14,9 +14,14 @@ class Socket {
     let socket = new WebSocket(`wss://${window.location.host}/api`)
     this.socket = new Promise(r => socket.onopen = () => r(socket))
     this.socket.then(s => s.onmessage = (msg) => {
-      let { type, data } = JSON.parse(msg.data)
-      if (this.listeners[type]) {
-        this.listeners[type](data)
+      try {
+        let obj = JSON.parse(msg.data)
+        if (this.listeners[obj.type]) {
+          this.listeners[obj.type](obj.data)
+        }
+      } catch(err) {
+        console.error(err)
+        console.error("Error on", msg)
       }
     })
   }

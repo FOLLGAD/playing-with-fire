@@ -113,6 +113,10 @@ wss.on('connection', (ws, req) => {
 
     let leaveGame = async () => {
         if (currentGame) {
+            let data = JSON.stringify({ type: 'player-leave', data: [ws.username] })
+            currentGame.connections().forEach(s => {
+                s.send(data)
+            })
             currentGame.leaveGame(ws)
             if (currentGame.connections().length === 0) {
                 currentGame.destroy()
@@ -124,6 +128,8 @@ wss.on('connection', (ws, req) => {
 
     ws.on('message', message => {
         const { type, data } = JSON.parse(message)
+
+        let currentPlayer = null
 
         // console.log(`${ws.username} says: ${type} ${data}`)
 
@@ -155,24 +161,41 @@ wss.on('connection', (ws, req) => {
 
                 if (currentGame && currentGame.id !== g.id) {
                     currentGame.leaveGame(ws)
+                    currentGame = null
+                }
+
+                let alreadyJoined = g.players.find(p => p.username === ws.username)
+
+                if (alreadyJoined) {
+                    // Override socket
+                    alreadyJoined.socket = ws
+                    currentGame = g
                 } else if (!currentGame) {
-                    g.joinGame(ws)
+                    currentPlayer = g.joinGame(ws)
                 }
 
                 currentGame = g
-                ws.send(JSON.stringify({ type: 'joined-game', data: currentGame.getData() }))
-            }else if(type === "start-game"){
-
-                if(ws === currentGame.host){
-                    let isHost = true
-                    wss.clients.forEach(c => {
-                        c.send(JSON.stringify({ type: 'open-canvas', data: isHost }))
+                let gameData = currentGame.getData()
+                ws.send(JSON.stringify({
+                    type: 'joined-game', data: {
+                        gamedata: gameData,
+                        isHost: currentGame.host === ws,
+                    }
+                }))
+                if (currentPlayer) {
+                    console.log(currentPlayer)
+                    let sendData = JSON.stringify({
+                        type: 'player-joined', data: [
+                            { username: currentPlayer.username, player: currentPlayer.id, diedAt: currentPlayer.diedAt }
+                        ]
                     })
+                    currentGame.players.forEach(p => p.socket && p.socket.send(sendData))
                 }
-
-            }else {
+            } else {
                 ws.send(JSON.stringify({ type: 'not-found' }))
             }
+        } else if (type === "start-game") {
+            currentGame.start()
         } else if (type === 'leave-game') {
             leaveGame()
         }
@@ -198,10 +221,10 @@ const authMiddleware = (req, res, next) => {
 const authenticate = (cookie, ip) => {
     if (sessions.has(cookie)) {
         const session = sessions.get(cookie)
-        let fiveDays = 1000 * 60 * 60 * 24 * 5
+        const time = 1000 * 60 * 30 // 30 min
 
-        // Expires after five days
-        if (session.at + fiveDays < Date.now()) {
+        // Expires after 30 minutes of continuous inactivity
+        if (session.at + time < Date.now()) {
             sessions.delete(cookie)
             throw new Error("Cookie expired")
         }
@@ -209,6 +232,9 @@ const authenticate = (cookie, ip) => {
         if (session.ip !== ip) {
             throw new Error("Calling from wrong IP address")
         }
+
+        // Update activity
+        session.at = Date.now()
 
         return session.username
     }
@@ -261,17 +287,17 @@ const auth = express.Router()
         console.log("Highscore access")
         await GameScore.findAll({
             attributes: ['username', [sequelize.fn('count', sequelize.col('username')), 'count']],
-            group : ['gameScore.username'],
+            group: ['gameScore.username'],
             limit: 10,
             where: {
                 placement: 1
-              },
+            },
             raw: true,
             order: sequelize.literal('count DESC')
-          }).then((winners) => {
+        }).then((winners) => {
             console.table(winners)
-            res.status(200).json({ list: winners})
-          });
+            res.status(200).json({ list: winners })
+        });
     })
 
 app.use('/api', auth)

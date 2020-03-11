@@ -10,10 +10,11 @@
   </div><br>
   <div v-if="!startGame">
       <div>Host will start game when players are ready.</div><br>
-      <button @click="start">Start Game</button>
+      <button v-if="isHost" @click="start">Start Game</button>
   </div>
-    <div v-if="startGame">
+    <div v-show="startGame">
       <div>
+        <h1 v-if="winner">{{this.winner + " is the winner!"}}</h1>
         <canvas ref="gamecanvas"></canvas>
       </div>
     </div>
@@ -29,7 +30,10 @@ export default {
     gameCanvas: null,
     socket: null,
     players: [],
-    startGame: false
+    startGame: false,
+    isHost: false,
+    gamedata: null,
+    winner: null,
   }),
   methods: {
     start() {
@@ -41,18 +45,34 @@ export default {
     this.socket = await this.$root.socket;
 
     this.socket.on("joined-game", data => {
-      this.players = data.players
+      let { gamedata, isHost } = data
+      this.gamedata = gamedata
+      this.players = gamedata.players
+      this.isHost = isHost
+    });
+    this.socket.on("game-end", data => {
+      this.winner = data
+    });
+    this.socket.on("player-joined", playersUsernames => {
+      playersUsernames.forEach(p => {
+        let found = this.players.find(tp => tp.player === p.player)
+        if (found) {
+          Object.assign(found, p)
+        } else {
+          this.players.push(p)
+        }
+      })
+    });
+    this.socket.on("player-leave", playersUsernames => {
+      this.players = this.players.filter(p => playersUsernames.indexOf(p.username) === -1)
     });
     this.socket.on("not-found", () => {
       this.$router.push(`/gamerooms`);
     });
-    this.socket.on("open-canvas", ({isHost}) => {
-      if(isHost){
-        this.startGame = true
-        init(this.socket, this.gameCanvas, data.entities);
-      }  
+    this.socket.on("open-canvas", () => {
+      this.startGame = true
+      init(this.socket, this.$refs.gamecanvas, this.gamedata.entities);
     });
-
 
     this.socket.send("join-game", this.$route.params.gameid)
   },
@@ -60,14 +80,6 @@ export default {
     if (this.socket) this.socket.send('leave-game')
     destroy()
   },
-  created() {
-    fetch("/api/game")
-      .then(res => res.json())
-      .then(data => {
-        this.host = data.host;
-      })
-      .catch(console.error);
-  }
 };
 </script>
 
