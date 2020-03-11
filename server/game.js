@@ -78,7 +78,7 @@ class Barrel extends Entity {
         this.powerup = null
 
         // Generate random powerup
-        if (Math.random() > 0.8) {
+        if (Math.random() < 0.8) {
             // 20% chance of spawning powerup
             let powerups = Object.keys(Powerup.PowerupTypes)
             // Gets a random index from powerups
@@ -105,11 +105,12 @@ class Powerup extends Entity {
 }
 
 class Game {
-    constructor(gameid) {
+    constructor(gameid, host) {
         this.players = []
         this.entities = []
         this.idCounter = 10
         this.id = gameid
+        this.host = host
         this.initializeBarrels()
         this.initializeWalls()
         this.interval = null

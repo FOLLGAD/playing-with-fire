@@ -7,10 +7,16 @@
         {{player.username}}
       </div>
     </div>
+  </div><br>
+  <div v-if="!startGame">
+      <div>Host will start game when players are ready.</div><br>
+      <button @click="start">Start Game</button>
   </div>
-  <div>
-    <canvas ref="gamecanvas"></canvas>
-  </div>
+    <div v-if="startGame">
+      <div>
+        <canvas ref="gamecanvas"></canvas>
+      </div>
+    </div>
 </div>
 </template>
 
@@ -23,24 +29,44 @@ export default {
     gameCanvas: null,
     socket: null,
     players: [],
+    startGame: false
   }),
+  methods: {
+    start() {
+      this.$root.socket.send("start-game");
+    }
+  },
   async mounted() {
     this.gameCanvas = this.$refs.gamecanvas;
     this.socket = await this.$root.socket;
 
     this.socket.on("joined-game", data => {
       this.players = data.players
-      init(this.socket, this.gameCanvas, data.entities);
     });
     this.socket.on("not-found", () => {
       this.$router.push(`/gamerooms`);
     });
+    this.socket.on("open-canvas", ({isHost}) => {
+      if(isHost){
+        this.startGame = true
+        init(this.socket, this.gameCanvas, data.entities);
+      }  
+    });
+
 
     this.socket.send("join-game", this.$route.params.gameid)
   },
   beforeDestroy() {
     if (this.socket) this.socket.send('leave-game')
     destroy()
+  },
+  created() {
+    fetch("/api/game")
+      .then(res => res.json())
+      .then(data => {
+        this.host = data.host;
+      })
+      .catch(console.error);
   }
 };
 </script>

@@ -99,6 +99,7 @@ const wss = new WebSocket.Server({
     }
 })
 
+
 wss.on('connection', (ws, req) => {
     const sc = req.signedCookies['session-cookie']
     ws.username = authenticate(sc, req.connection.remoteAddress)
@@ -134,7 +135,7 @@ wss.on('connection', (ws, req) => {
             ws.send(JSON.stringify({ type: 'new-game', data: currentGame.getData() }))
         } else if (type === 'create-game') {
             const gameid = uuid.v4()
-            const game = new Game(gameid)
+            const game = new Game(gameid, ws)
 
             game.joinGame(ws)
 
@@ -160,7 +161,16 @@ wss.on('connection', (ws, req) => {
 
                 currentGame = g
                 ws.send(JSON.stringify({ type: 'joined-game', data: currentGame.getData() }))
-            } else {
+            }else if(type === "start-game"){
+
+                if(ws === currentGame.host){
+                    let isHost = true
+                    wss.clients.forEach(c => {
+                        c.send(JSON.stringify({ type: 'open-canvas', data: isHost }))
+                    })
+                }
+
+            }else {
                 ws.send(JSON.stringify({ type: 'not-found' }))
             }
         } else if (type === 'leave-game') {

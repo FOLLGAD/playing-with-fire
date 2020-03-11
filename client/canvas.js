@@ -115,6 +115,9 @@ lightningImage.src = '/assets/lightning.png'
 const extrabombImage = new Image()
 extrabombImage.src = '/assets/extrabomb.png'
 
+const playerImage = new Image()
+playerImage.src = '/assets/player.png'
+
 let promise = new Promise(res => {
     let done = 0, required = 0
 
@@ -137,6 +140,7 @@ let promise = new Promise(res => {
     addImg(barrelImage)
     addImg(fireImage)
     addImg(shoesImage)
+    addImg(playerImage)
 })
 
 function render() {
