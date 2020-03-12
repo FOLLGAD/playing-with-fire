@@ -110,10 +110,10 @@ const shoesImage = new Image()
 shoesImage.src = '/assets/shoe.png'
 
 const lightningImage = new Image()
-lightningImage.src = '/assets/lightning.png'
+lightningImage.src = '/assets/lightning.PNG'
 
 const extrabombImage = new Image()
-extrabombImage.src = '/assets/extrabomb.png'
+extrabombImage.src = '/assets/extrabomb.PNG'
 
 const playerImage = new Image()
 playerImage.src = '/assets/player.png'

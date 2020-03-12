@@ -29,6 +29,7 @@ class Player extends Entity {
     constructor({ socket, id }) {
         super({ type: Entity.Types.PLAYER, id })
         this.socket = socket
+        this.username = socket.username
 
         this.lastInput = null
         this.speed = 0.005
@@ -51,11 +52,12 @@ class Wall extends Entity {
 }
 
 class Fire extends Entity {
-    constructor({ id, pos, timeout }) {
+    constructor({ id, pos, timeout, removeAt }) {
         super({ type: Entity.Types.FIRE, id })
         this.timeOut = timeout
         this.pos = pos
         this.isBlocking = false
+        this.removeAt = removeAt
     }
 }
 
@@ -115,7 +117,7 @@ class Game {
         this.initializeWalls()
         this.interval = null
         this.tick = this.tick.bind(this)
-        this.start()
+        this.running = false
     }
 
     joinGame(socket) {
@@ -133,7 +135,7 @@ class Game {
         p.diedAt = Date.now()
         this.removeEntity(player)
         let playersLeft = this.players.filter(p => p.diedAt == null)
-        if (playersLeft.length === 0) {
+        if (playersLeft.length === 1 || playersLeft.length === 0) {
             this.finished()
         }
 
@@ -149,6 +151,8 @@ class Game {
         //  }
         let p = this.players.find(p => p.socket === socket)
         if (p) {
+            let ent = this.entities.find(d => d.id === p.player)
+            this.killPlayer(ent)
             p.socket = null
         }
     }
@@ -159,10 +163,18 @@ class Game {
 
     // Start playing
     start() {
+        this.running = true
         this.interval = setInterval(this.tick, 1000 / 30)
+
+        this.players.forEach(p => {
+            p.socket.send(JSON.stringify({ type: 'open-canvas', data: {} }))
+        })
+        let players = this.entities.filter(e => e.type === Entity.Types.PLAYER)
+        players.forEach(p => this.emitPlayerPos(p))
     }
 
     movePlayer(socket, { delta, xdt, ydt, space }) {
+        if (!this.running) return;
         let player = this.entities.find(t => t.type === "PLAYER" && t.socket === socket)
         if (!player) return;
 
@@ -351,6 +363,8 @@ class Game {
     }
 
     tick() {
+        let toRemove = this.entities.filter(e => e.removeAt && e.removeAt < Date.now())
+        if (toRemove.length > 0) this.removeEntities(toRemove)
         // Go through all bombs
         this.entities
             .filter(elem => elem.type === Entity.Types.BOMB && Date.now() >= elem.explodesAt)
@@ -361,23 +375,25 @@ class Game {
                 this.removeEntity(element)
                 let bombOwner = this.entities.find(player => (element.owner === player.id))
                 //East and center
+                if (!bombOwner) {
+                    //player died after placing bomb
+                    return;
+                }
                 for (let i = 0; i < bombOwner.fireLength; i++) {
                     let block = this.getBlockByPosition(x + i, y)
                     if (block && block.type === "WALL") {
                         break;
                     } else if (block && block.type === "BARREL") {
                         this.removeEntity(block)
-                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, removeAt: Date.now() + 2500 })
                         this.addEntity(fire)
-                        setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                         break;
                     } else {
-                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, timeout: 2500 })
+                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, removeAt: Date.now() + 2500 })
                         this.addEntity(fire)
-                        setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                     }
                 }
-                for (let i = 1; i < bombOwner.fireLength + 1; i++) {
+                for (let i = 1; i < 4; i++) {
                     let xhelp, yhelp
                     for (let m = 1; m < bombOwner.fireLength; m++) {
                         switch (i) {
@@ -406,15 +422,13 @@ class Game {
                             break;
                         } else if (block && block.type === "BARREL") {
                             this.removeEntity(block)
-              
-                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
+
+                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, removeAt: Date.now() + 2500 })
                             this.addEntity(fire)
-                            setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                             break;
                         } else {
-                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, timeout: 2500 })
+                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, removeAt: Date.now() + 2500 })
                             this.addEntity(fire)
-                            setTimeout(() => { this.removeEntity(fire); }, fire.timeOut);
                         }
                     }
                 }
@@ -455,6 +469,16 @@ class Game {
                         }
                     });
             });
+    }
+    removeEntities(entities) {
+        let deleted = []
+        entities.forEach(e => {
+            let [entity] = this.entities.splice(this.entities.findIndex(g => g.id === e.id), 1)
+            deleted.push(entity.id)
+        })
+
+        let message = JSON.stringify({ type: 'delete', data: deleted })
+        this.players.forEach(s => s.socket && s.socket.send(message))
     }
 
     removeEntity(entityToRemove) {
@@ -544,7 +568,14 @@ class Game {
 
     // Stop playing (game ended)
     stop() {
+        this.running = false
         clearInterval(this.interval)
+        let winner = this.players.find(p => p.diedAt === null)
+
+        this.connections().forEach(socket => {
+            socket.send(JSON.stringify({ type: 'game-end', data: winner.username }))
+            this.leaveGame(socket)
+        })
     }
 
     // Kill game for garbage collector
@@ -556,7 +587,7 @@ class Game {
     getData() {
         return {
             entities: this.entities.map(e => e.getData()),
-            players: this.players.map(p => ({ username: p.username, id: p.id, diedAt: p.diedAt })),
+            players: this.players.map(p => ({ username: p.username, player: p.player, diedAt: p.diedAt })),
             id: this.id,
         }
     }
