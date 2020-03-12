@@ -157,11 +157,13 @@ wss.on('connection', (ws, req) => {
                     currentGame.leaveGame(ws)
                 } else if (!currentGame) {
                     g.joinGame(ws)
+                }else {
+                    ws.send(JSON.stringify({ type: 'not-found' }))
                 }
-
+            }
                 currentGame = g
                 ws.send(JSON.stringify({ type: 'joined-game', data: currentGame.getData() }))
-            }else if(type === "start-game"){
+        }else if(type === "start-game"){
 
                 if(ws === currentGame.host){
                     let isHost = true
@@ -170,9 +172,6 @@ wss.on('connection', (ws, req) => {
                     })
                 }
 
-            }else {
-                ws.send(JSON.stringify({ type: 'not-found' }))
-            }
         } else if (type === 'leave-game') {
             leaveGame()
         }
