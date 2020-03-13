@@ -1,14 +1,13 @@
 <template>
   <div id="app">
-    <div style="text-align: center">
-      <h1>Welcome!</h1>
-      <div v-if="!isAuthed" v-on:click="redirect('/login')">Login</div>
-      <div v-if="!isAuthed" v-on:click="redirect('/signup')">Signup</div>
-      <div v-if="isAuthed" @click="logoutRedirect">Log out</div>
-      <div v-on:click="redirect('/highscores')">Highscores</div>
-      <div v-if="isAuthed" v-on:click="redirect('/gamerooms')">Game rooms</div>
+    <ul class="header-ul">
+      <li class="li-extend"><a v-if="!isAuthed" v-on:click="redirect('/login')">Login</a></li>
+      <li class="li-extend"><a v-if="!isAuthed" v-on:click="redirect('/signup')">Signup</a></li>
+      <li class="li-extend"><a v-if="isAuthed" @click="logoutRedirect">Log out</a></li>
+      <li class="li-extend"><a v-on:click="redirect('/highscores')">Highscores</a></li>
+      <li class="li-extend"><a v-if="isAuthed" v-on:click="redirect('/gamerooms')">Game rooms</a></li>
+    </ul>
       <router-view></router-view>
-    </div>
   </div>
 </template>
 

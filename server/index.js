@@ -173,7 +173,7 @@ wss.on('connection', (ws, req) => {
                 } else if (!currentGame) {
                     currentPlayer = g.joinGame(ws)
                 }
-            }
+                
                 currentGame = g
                 let gameData = currentGame.getData()
                 ws.send(JSON.stringify({
@@ -191,7 +191,7 @@ wss.on('connection', (ws, req) => {
                     })
                     currentGame.players.forEach(p => p.socket && p.socket.send(sendData))
                 }
-            } else {
+                } else {
                 ws.send(JSON.stringify({ type: 'not-found' }))
             }
     

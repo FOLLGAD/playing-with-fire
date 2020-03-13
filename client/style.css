@@ -2,7 +2,7 @@
   position: absolute;
   top: 30%;
   z-index: 1;
-  background: #FFFFFF;
+  background:#333;
   max-width: 500px;
   margin: 0 auto 100px;
   padding: 60px;
@@ -17,5 +17,46 @@
 }
 
 .h1 {
-	font: Helvetica;
+  color: black;
+  font-family: "Times New Roman";
+}
+
+.header-ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+}
+
+.li-extend {
+  float: left;
+}
+
+li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+li a:hover {
+  background-color: rgb(236, 0, 0);
+}
+
+.highscore-ul {
+  list-style-type: none;
+  margin-right: 150px;
+  margin-left: 150px;
+  padding:0;
+  background-color: #333;
+}
+
+li b {
+  display: block;
+  border: 1px solid white;
+  color: #ffff;
+  padding: 10px 50px;
+  text-decoration: none;
 }

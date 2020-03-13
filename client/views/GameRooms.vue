@@ -1,14 +1,15 @@
 <template>
   <div class="row">
-    <div v-for="game in games" :key="game.id">
-      <div style="text-align: center;">
-        <h4>
-          <span>{{game.id}} {{game.players}}</span>
+    <div align="center">
+      <ul class="highscore-ul">
+        <li v-for="game in games" :key="game.id">
+          <b>{{game.id}} {{game.players}}<br>
           <button @click="redirectGame(game.id)">Enter game</button>
-        </h4>
-      </div>
+          </b>
+        </li>
+      </ul>
+      <button @click="createGame">Create Game</button>
     </div>
-    <button @click="createGame">Create Game</button>
   </div>
 </template>
 

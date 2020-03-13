@@ -2,7 +2,7 @@
     <div style="text-align: center">
         <div class ="login-page">
             <form class ="form" v-on:submit.prevent="login()">
-            <h1 class="h1">Signup</h1>
+            <div style="color:white;">Signup</div><br>
             <input class = "h1" type="text" v-model="name" placeholder="username" required autofocus /><br>
             <input class = "h1" type="text" v-model="password" placeholder="password" required autofocus /><br>
             <input type="submit" value="Submit" /><br>

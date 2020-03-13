@@ -571,11 +571,12 @@ class Game {
         this.running = false
         clearInterval(this.interval)
         let winner = this.players.find(p => p.diedAt === null)
-
-        this.connections().forEach(socket => {
-            socket.send(JSON.stringify({ type: 'game-end', data: winner.username }))
-            this.leaveGame(socket)
-        })
+        if(winner){
+            this.connections().forEach(socket => {
+                socket.send(JSON.stringify({ type: 'game-end', data: winner.username }))
+                this.leaveGame(socket)
+            })
+        }
     }
 
     // Kill game for garbage collector
