@@ -3,7 +3,10 @@
     <div align="center">
       <ul class="highscore-ul">
         <li v-for="game in games" :key="game.id">
-          <b>{{game.id}} {{game.players}}<br>
+          <b>{{game.id}}<br> Players:<br>
+            <li style="background-color: rgb(236, 0, 0);" v-for="(player, index) in game.players" :key="player.socket">
+              <b>{{index + 1}}.{{player.username}}</b>
+            </li>
           <button @click="redirectGame(game.id)">Enter game</button>
           </b>
         </li>
