@@ -92,7 +92,6 @@ const wss = new WebSocket.Server({
 
                 next(true)
             } catch (error) {
-                console.log(error)
                 next(false)
             }
         })
@@ -183,7 +182,6 @@ wss.on('connection', (ws, req) => {
                     }
                 }))
                 if (currentPlayer) {
-                    console.log(currentPlayer)
                     let sendData = JSON.stringify({
                         type: 'player-joined', data: [
                             { username: currentPlayer.username, player: currentPlayer.id, diedAt: currentPlayer.diedAt }
@@ -281,11 +279,9 @@ const auth = express.Router()
         res.json({})
     })
     .get('/games', authMiddleware, async (req, res) => {
-        console.log(games)
         res.status(200).json({ list: Array.from(games.values()).map(g => g.getData()) })
     })
     .get('/highscores', async (req, res) => {
-        console.log("Highscore access")
         await GameScore.findAll({
             attributes: ['username', [sequelize.fn('count', sequelize.col('username')), 'count']],
             group: ['gameScore.username'],
