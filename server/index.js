@@ -163,37 +163,37 @@ wss.on('connection', (ws, req) => {
                     currentGame = null
                 }
 
-                let alreadyJoined = g.players.find(p => p.username === ws.username)
+                let alreadyJoinedPlayer = g.players.find(p => p.username === ws.username)
 
-                if (alreadyJoined) {
+                if (alreadyJoinedPlayer) {
+                    currentPlayer = alreadyJoinedPlayer
                     // Override socket
-                    alreadyJoined.socket = ws
+                    alreadyJoinedPlayer.socket = ws
                     currentGame = g
                 } else if (!currentGame) {
                     currentPlayer = g.joinGame(ws)
                 }
-                
+
                 currentGame = g
                 let gameData = currentGame.getData()
                 ws.send(JSON.stringify({
                     type: 'joined-game', data: {
-                        gamedata: gameData,
+                        players: gameData.players,
                         isHost: currentGame.host === ws,
                     }
                 }))
                 if (currentPlayer) {
                     let sendData = JSON.stringify({
                         type: 'player-joined', data: [
-                            { username: currentPlayer.username, player: currentPlayer.id, diedAt: currentPlayer.diedAt }
+                            { username: currentPlayer.username },
                         ]
                     })
                     currentGame.players.forEach(p => p.socket && p.socket.send(sendData))
                 }
-                } else {
+            } else {
                 ws.send(JSON.stringify({ type: 'not-found' }))
             }
-    
-        } else if(type === "start-game") {
+        } else if (type === "start-game") {
             currentGame.start()
         } else if (type === 'leave-game') {
             leaveGame()

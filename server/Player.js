@@ -1,10 +1,11 @@
 const Entity = require('./Entity')
 
 module.exports = class Player extends Entity {
-    constructor({ socket, id }) {
+    constructor({ socket, id, color }) {
         super({ type: Entity.Types.PLAYER, id })
         this.socket = socket
         this.username = socket.username
+        this.color = color
 
         this.lastInput = null
         this.speed = 0.005
@@ -15,5 +16,9 @@ module.exports = class Player extends Entity {
         this.explodeTimer = 2000
         this.pos = { x: 1, y: 1 }
         this.diedAt = null
+    }
+    // Override the Entity.getData function
+    getData() {
+        return { type: this.type, pos: this.pos, id: this.id, color: this.color }
     }
 }

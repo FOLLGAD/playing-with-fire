@@ -25,10 +25,9 @@ class Game {
         if (this.players.find(d => d.socket === socket)) {
             throw new Error("Already joined")
         }
-        let player = new Player({ id: this.nextId(), socket })
-        this.entities.push(player)
-        this.players.push({ socket, username: socket.username, player: player.id, diedAt: null })
-        return player
+        let pl = { socket, username: socket.username, player: null, diedAt: null }
+        this.players.push(pl)
+        return pl
     }
 
     killPlayer(player) {
@@ -62,6 +61,13 @@ class Game {
             }
             p.socket = null
         }
+        if (this.host == socket) {
+            let newHost = this.players.find(p => p.socket != null)
+            this.host = newHost.socket
+
+            let msg = JSON.stringify({ type: 'new-host', data: {} })
+            this.host.send(msg)
+        }
     }
 
     connections() {
@@ -75,20 +81,36 @@ class Game {
         this.running = true
         this.interval = setInterval(this.tick, 1000 / 30)
 
-        let positions = [
+        // All four corners of the map
+        let spawnPositions = [
             { x: 1, y: 1 },
             { x: 1, y: this.height - 2 },
             { x: this.width - 2, y: this.height - 2 },
             { x: this.width - 2, y: 1 },
         ]
-        this.entities
-            .filter(p => p.type === Entity.Types.PLAYER)
-            .forEach((e, i) => {
-                e.pos = positions[i % positions.length]
+        let playerColors = [
+            "tomato",
+            "mediumseagreen",
+            "gold",
+            "#519dff",
+        ]
+
+        this.players.forEach((p, i) => {
+            let player = new Player({
+                id: this.nextId(),
+                socket: p.socket,
+                color: playerColors[i % playerColors.length],
             })
+            p.player = player.id
+
+            // Put all players in their own corner (assumes four or less players)
+            player.pos = spawnPositions[i % spawnPositions.length]
+
+            this.entities.push(player)
+        })
 
         this.players.forEach(p => {
-            p.socket.send(JSON.stringify({ type: 'open-canvas', data: {} }))
+            p.socket.send(JSON.stringify({ type: 'game-start', data: this.getData() }))
         })
         let players = this.entities.filter(e => e.type === Entity.Types.PLAYER)
         players.forEach(p => this.emitPlayerPos(p))
@@ -484,10 +506,10 @@ class Game {
         let winner = this.players.find(p => p.diedAt === null)
 
         if (winner) {
-            this.connections().forEach(socket => {
-                socket.send(JSON.stringify({ type: 'winner', data: winner.username }))
-                // this.leaveGame(socket)
-            })
+            this.connections()
+                .forEach(socket => {
+                    socket.send(JSON.stringify({ type: 'winner', data: winner.username }))
+                })
         }
 
         let players = this.players.sort((a, b) => a.diedAt < b.diedAt)
