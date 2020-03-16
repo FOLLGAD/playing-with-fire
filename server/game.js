@@ -46,23 +46,20 @@ class Game {
     }
 
     leaveGame(socket) {
-        // let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
-        //  if (player) {
-        //      let message = JSON.stringify({ type: 'remove', data: [player.id] })
-        //      this.sockets.forEach(p => {
-        //          p.send(message)
-        //      })
-        //  }
-        let p = this.players.find(p => p.socket === socket)
+        let index = this.players.findIndex(p => p.socket === socket)
+
+        if (index === -1) return
+
+        let [p] = this.players.splice(index, 1)
         if (p) {
             let ent = this.entities.find(d => d.id === p.player)
             if (ent) {
                 this.killPlayer(ent)
             }
-            p.socket = null
         }
+        // If host left, make another person host
         if (this.host == socket) {
-            let newHost = this.players.find(p => p.socket != null)
+            let newHost = this.players[0]
             this.host = newHost.socket
 
             let msg = JSON.stringify({ type: 'new-host', data: {} })

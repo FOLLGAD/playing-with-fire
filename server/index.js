@@ -163,14 +163,7 @@ wss.on('connection', (ws, req) => {
                     currentGame = null
                 }
 
-                let alreadyJoinedPlayer = g.players.find(p => p.username === ws.username)
-
-                if (alreadyJoinedPlayer) {
-                    currentPlayer = alreadyJoinedPlayer
-                    // Override socket
-                    alreadyJoinedPlayer.socket = ws
-                    currentGame = g
-                } else if (!currentGame) {
+                if (!currentGame) {
                     currentPlayer = g.joinGame(ws)
                 }
 
