@@ -9,8 +9,8 @@
     </div>
   </div><br>
   <div v-if="!startGame">
-      <div>Host will start game when players are ready.</div><br>
       <button v-if="isHost" @click="start">Start Game</button>
+      <div v-else>Host will start game when players are ready.</div><br>
   </div>
   <div v-show="startGame" class="game-div">
       <h1 v-if="winner" class="winner-text">{{this.winner + " is the winner!"}}</h1>

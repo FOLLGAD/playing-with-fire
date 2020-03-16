@@ -2,7 +2,7 @@
   <div class="row">
     <div align="center">
       <ul class="highscore-ul">
-        <li v-for="game in games" :key="game.id">
+        <li v-if="games.length > 0" v-for="game in games" :key="game.id">
           <b>{{game.id}}<br> Players:<br>
             <li style="background-color: rgb(236, 0, 0);" v-for="(player, index) in game.players" :key="player.socket">
               <b>{{index + 1}}.{{player.username}}</b>
@@ -10,6 +10,7 @@
           <button @click="redirectGame(game.id)">Enter game</button>
           </b>
         </li>
+        <h3 v-else>No games found</h3>
       </ul>
       <button @click="createGame">Create Game</button>
     </div>
