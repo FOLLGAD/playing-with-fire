@@ -15,6 +15,16 @@ const GameScore = require('./models/GameScore')
 
 const { Game } = require('./game')
 
+const readableGameId = (len = 8) => {
+    let alp = "abcdefghijklmnopqrstuvwxyz"
+
+    let id = ""
+    for (let i = 0; i < len; i++) {
+        id += alp[Math.random() * alp.length | 0]
+    }
+    return id
+}
+
 // Loads the options from the .env file into process.env.{SETTING}
 require('dotenv').config()
 
@@ -139,7 +149,7 @@ wss.on('connection', (ws, req) => {
         } else if (type === 'game-info') {
             ws.send(JSON.stringify({ type: 'new-game', data: currentGame.getData() }))
         } else if (type === 'create-game') {
-            const gameid = uuid.v4()
+            const gameid = readableGameId()
             const game = new Game(gameid, ws)
 
             game.joinGame(ws)
