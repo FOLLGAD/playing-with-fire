@@ -1,7 +1,7 @@
 <template>
 <div class="game">
   <div class="game-sidebar">
-    <h1>Sidebar</h1>
+    <h2>Players</h2>
     <div class="sidebar-players">
       <div class="player" v-for="player in players">
         {{player.username}}
@@ -50,7 +50,7 @@ export default {
       this.players = gamedata.players
       this.isHost = isHost
     });
-    this.socket.on("game-end", data => {
+    this.socket.on("winner", data => {
       this.winner = data
     });
     this.socket.on("player-joined", playersUsernames => {

@@ -23,7 +23,7 @@ const routes = [
   { path: '/highscores', component: HighscoresView },
   { path: '/login', component: LoginView },
   { path: '/signup', component: SignupView },
-  { path: '/', component: Error404 },
+  { path: '/', component: HighscoresView },
 ];
 
 const router = new VueRouter({

@@ -4,7 +4,7 @@
             <form class ="form" v-on:submit.prevent="login()">
             <div style="color:white;">Login</div><br>
             <input class = "h1" type="text" v-model="name" placeholder="username" required autofocus /><br>
-            <input class = "h1" type="text" v-model="password" placeholder="password" required autofocus /><br>
+            <input class = "h1" type="password" v-model="password" placeholder="password" required autofocus /><br>
             <input type="submit" value="Submit" /><br>
             </form><br>
         </div>
