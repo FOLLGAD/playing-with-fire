@@ -156,38 +156,36 @@ function render() {
     ctx.fill()
     ctx.stroke()
 
-    gameScene.forEach(function (arrayItem) {
-        var type = arrayItem.type;
-        var position = arrayItem.pos;
+    gameScene.forEach(function (entity) {
+        let { type, pos } = entity;
         switch (type) {
             case "WALL":
                 break;
             case "BARREL":
-                ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                ctx.drawImage(barrelImage, tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                 break;
             case "BOMB":
-                ctx.drawImage(bombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                ctx.drawImage(bombImage, tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                 break;
             case "FIRE":
-                ctx.drawImage(fireImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                ctx.drawImage(fireImage, tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                 break;
             case "POWERUP":
-                switch (arrayItem.powerupType) {
+                switch (entity.powerupType) {
                     case "SPEED":
-                        ctx.drawImage(shoesImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        ctx.drawImage(shoesImage, tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                         break;
                     case "EXPLOSION":
-                        ctx.drawImage(lightningImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        ctx.drawImage(lightningImage, tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                         break;
                     case "BOMBS":
-                        ctx.drawImage(extrabombImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                        ctx.drawImage(extrabombImage, tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                         break;
                 }
                 break;
             case "PLAYER":
-                // ctx.drawImage(barrelImage, tileSize * position.x, tileSize * position.y, tileSize, tileSize);
-                ctx.fillStyle = "tomato";
-                ctx.fillRect(tileSize * position.x, tileSize * position.y, tileSize, tileSize);
+                ctx.fillStyle = entity.color || "fuchsia";
+                ctx.fillRect(tileSize * pos.x, tileSize * pos.y, tileSize, tileSize);
                 break;
             default:
                 console.error("unkown type, this block doesnt exist in game", type);

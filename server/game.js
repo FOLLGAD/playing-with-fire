@@ -1,120 +1,21 @@
-
-const TILESIZE = 1
 const GameScore = require('./models/GameScore')
-
-class Entity {
-    static Types = {
-        PLAYER: "PLAYER",
-        WALL: "WALL",
-        BARREL: "BARREL",
-        BOMB: "BOMB",
-        POWERUP: "POWERUP",
-        FIRE: "FIRE",
-    }
-    constructor({ type, id }) {
-        this.pos = { x: 0, y: 0 }
-        this.type = type
-        this.id = id
-        this.isBlocking = false
-
-        this.width = TILESIZE
-        this.height = TILESIZE
-    }
-    getData() {
-        return { type: this.type, pos: this.pos, id: this.id }
-    }
-}
-
-class Player extends Entity {
-    constructor({ socket, id }) {
-        super({ type: Entity.Types.PLAYER, id })
-        this.socket = socket
-        this.username = socket.username
-
-        this.lastInput = null
-        this.speed = 0.005
-        this.maxBombs = 1
-        this.fireLength = 3
-        this.lastBombPlace = null
-        this.bombCooldown = 3000 // 3 Seconds
-        this.explodeTimer = 2000
-        this.pos = { x: 1, y: 1 }
-        this.diedAt = null
-    }
-}
-
-class Wall extends Entity {
-    constructor({ id, pos }) {
-        super({ type: Entity.Types.WALL, id })
-        this.pos = pos
-        this.isBlocking = true
-    }
-}
-
-class Fire extends Entity {
-    constructor({ id, pos, timeout, removeAt }) {
-        super({ type: Entity.Types.FIRE, id })
-        this.timeOut = timeout
-        this.pos = pos
-        this.isBlocking = false
-        this.removeAt = removeAt
-    }
-}
-
-class Bomb extends Entity {
-    constructor({ id, pos, owner, explodesAt }) {
-        super({ type: Entity.Types.BOMB, id })
-        this.owner = owner
-        this.placedAt = Date.now()
-        this.explodesAt = explodesAt
-        this.isBlocking = false
-        this.pos = pos
-    }
-}
-
-class Barrel extends Entity {
-    constructor({ id, pos }) {
-        super({ type: Entity.Types.BARREL, id })
-        this.pos = pos
-        this.isBlocking = true
-        this.powerup = null
-
-        // Generate random powerup
-        if (Math.random() < 0.8) {
-            // 20% chance of spawning powerup
-            let powerups = Object.keys(Powerup.PowerupTypes)
-            // Gets a random index from powerups
-            this.powerup = powerups[Math.floor(Math.random() * powerups.length)]
-        }
-    }
-}
-
-class Powerup extends Entity {
-    // Powerup types
-    static PowerupTypes = {
-        SPEED: 'SPEED',
-        EXPLOSION: 'EXPLOSION',
-        BOMBS: 'BOMBS',
-    }
-    constructor({ id, pos, powerupType }) {
-        super({ type: Entity.Types.POWERUP, id })
-        this.pos = pos
-        this.powerupType = powerupType
-    }
-    getData() {
-        return { type: this.type, pos: this.pos, id: this.id, powerupType: this.powerupType }
-    }
-}
+const Entity = require('./Entity')
+const Barrel = require('./Barrel')
+const Bomb = require('./Bomb')
+const Fire = require('./Fire')
+const Powerup = require('./Powerup')
+const Wall = require('./Wall')
+const Player = require('./Player')
 
 class Game {
     constructor(gameid, host) {
+        this.width = 15
+        this.height = 13
         this.players = []
         this.entities = []
         this.idCounter = 10
         this.id = gameid
         this.host = host
-        this.initializeBarrels()
-        this.initializeWalls()
         this.interval = null
         this.tick = this.tick.bind(this)
         this.running = false
@@ -124,36 +25,45 @@ class Game {
         if (this.players.find(d => d.socket === socket)) {
             throw new Error("Already joined")
         }
-        let player = new Player({ id: this.nextId(), socket })
-        this.entities.push(player)
-        this.players.push({ socket, username: socket.username, player: player.id, diedAt: null })
-        return player
+        let pl = { socket, username: socket.username, player: null, diedAt: null }
+        this.players.push(pl)
+        return pl
     }
 
     killPlayer(player) {
+        if (!player) {
+            console.error("Tried to kill player", player)
+            return
+        }
         let p = this.players.find(p => p.player === player.id)
         p.diedAt = Date.now()
         this.removeEntity(player)
-        let playersLeft = this.players.filter(p => p.diedAt == null)
-        if (playersLeft.length === 1 || playersLeft.length === 0) {
-            this.finished()
-        }
 
+        let playersLeft = this.entities.filter(e => e.type === Entity.Types.Player && e.diedAt == null)
+        if (playersLeft.length <= 1) {
+            this.announceWinner()
+        }
     }
 
     leaveGame(socket) {
-        // let player = this.entities.find(e => e.type === Entity.Types.PLAYER && e.socket === socket)
-        //  if (player) {
-        //      let message = JSON.stringify({ type: 'remove', data: [player.id] })
-        //      this.sockets.forEach(p => {
-        //          p.send(message)
-        //      })
-        //  }
-        let p = this.players.find(p => p.socket === socket)
+        let index = this.players.findIndex(p => p.socket === socket)
+
+        if (index === -1) return
+
+        let [p] = this.players.splice(index, 1)
         if (p) {
             let ent = this.entities.find(d => d.id === p.player)
-            this.killPlayer(ent)
-            p.socket = null
+            if (ent) {
+                this.killPlayer(ent)
+            }
+        }
+        // If host left, make another person host
+        if (this.host == socket) {
+            let newHost = this.players[0]
+            this.host = newHost.socket
+
+            let msg = JSON.stringify({ type: 'new-host', data: {} })
+            this.host.send(msg)
         }
     }
 
@@ -163,11 +73,41 @@ class Game {
 
     // Start playing
     start() {
+        this.initializeWalls()
+        this.initializeBarrels()
         this.running = true
         this.interval = setInterval(this.tick, 1000 / 30)
 
+        // All four corners of the map
+        let spawnPositions = [
+            { x: 1, y: 1 },
+            { x: 1, y: this.height - 2 },
+            { x: this.width - 2, y: this.height - 2 },
+            { x: this.width - 2, y: 1 },
+        ]
+        let playerColors = [
+            "tomato",
+            "mediumseagreen",
+            "gold",
+            "#519dff",
+        ]
+
+        this.players.forEach((p, i) => {
+            let player = new Player({
+                id: this.nextId(),
+                socket: p.socket,
+                color: playerColors[i % playerColors.length],
+            })
+            p.player = player.id
+
+            // Put all players in their own corner (assumes four or less players)
+            player.pos = spawnPositions[i % spawnPositions.length]
+
+            this.entities.push(player)
+        })
+
         this.players.forEach(p => {
-            p.socket.send(JSON.stringify({ type: 'open-canvas', data: {} }))
+            p.socket.send(JSON.stringify({ type: 'game-start', data: this.getData() }))
         })
         let players = this.entities.filter(e => e.type === Entity.Types.PLAYER)
         players.forEach(p => this.emitPlayerPos(p))
@@ -385,11 +325,11 @@ class Game {
                         break;
                     } else if (block && block.type === "BARREL") {
                         this.removeEntity(block)
-                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, removeAt: Date.now() + 2500 })
+                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, removeAt: Date.now() + 1200 })
                         this.addEntity(fire)
                         break;
                     } else {
-                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, removeAt: Date.now() + 2500 })
+                        let fire = new Fire({ id: this.nextId(), pos: { x: x + i, y: y }, removeAt: Date.now() + 1200 })
                         this.addEntity(fire)
                     }
                 }
@@ -423,11 +363,11 @@ class Game {
                         } else if (block && block.type === "BARREL") {
                             this.removeEntity(block)
 
-                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, removeAt: Date.now() + 2500 })
+                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, removeAt: Date.now() + 1200 })
                             this.addEntity(fire)
                             break;
                         } else {
-                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, removeAt: Date.now() + 2500 })
+                            let fire = new Fire({ id: this.nextId(), pos: { x: xhelp, y: yhelp }, removeAt: Date.now() + 1200 })
                             this.addEntity(fire)
                         }
                     }
@@ -449,7 +389,7 @@ class Game {
                                     player.maxBombs += 1
                                     break;
                                 case ("SPEED"):
-                                    player.speed += 0.001
+                                    player.speed += 0.0005
                                     break;
                                 case ("EXPLOSION"):
                                     player.fireLength += 1
@@ -494,12 +434,8 @@ class Game {
         }
     }
 
-    procentageChance(proc) {
-        let chance = Math.random()
-        if (chance < (proc / 100)) {
-            return true
-        }
-        return false
+    percentageChance(proc) {
+        return Math.random() < (proc / 100)
     }
 
     nextId() {
@@ -507,15 +443,13 @@ class Game {
     }
 
     initializeWalls() {
-        let columnsNum = 15
-        let rowsNum = 13
-        for (let i = 0; i < rowsNum; i++) {
-            if (!(i % 2) || i === 0 || i == (rowsNum - 1)) {
-                for (let m = 0; m < columnsNum; m++) {
-                    if (!(m % 2) || m === 0 || m == (columnsNum - 1)) {
+        for (let i = 0; i < this.height; i++) {
+            if (!(i % 2) || i === 0 || i == (this.height - 1)) {
+                for (let m = 0; m < this.width; m++) {
+                    if (!(m % 2) || m === 0 || m == (this.width - 1)) {
                         let wall = new Wall({ id: this.nextId(), pos: { x: m, y: i } })
                         this.addEntity(wall)
-                    } else if (i === 0 || i == (rowsNum - 1)) {
+                    } else if (i === 0 || i == (this.height - 1)) {
                         let wall = new Wall({ id: this.nextId(), pos: { x: m, y: i } })
                         this.addEntity(wall)
                     }
@@ -523,22 +457,21 @@ class Game {
             } else {
                 let wall = new Wall({ id: this.nextId(), pos: { x: 0, y: i } })
                 this.addEntity(wall)
-                wall = new Wall({ id: this.nextId(), pos: { x: columnsNum - 1, y: i } })
+                wall = new Wall({ id: this.nextId(), pos: { x: this.width - 1, y: i } })
                 this.addEntity(wall)
             }
         }
     }
 
     initializeBarrels() {
-        let columnsNum = 15
-        let rowsNum = 13
-        for (let i = 2; i < rowsNum - 2; i++) {
-            for (let m = 2; m < columnsNum - 2; m++) {
-                if (!(m % 2 === 0 && i % 2 === 0)) {
-                    if (this.procentageChance(50)) {
-                        let barrel = new Barrel({ id: this.nextId(), pos: { x: m, y: i } })
-                        this.addEntity(barrel)
-                    }
+        for (let x = 1; x < this.width - 1; x++) {
+            for (let y = 1; y < this.height - 1; y++) {
+                if ((y == 1 || y == this.height - 2) && (x < 5 || x > this.width - 5)) continue;
+                if ((x == 1 || x == this.width - 2) && (y < 5 || y > this.height - 5)) continue;
+
+                if (!this.getBlockByPosition(x, y) && this.percentageChance(90)) {
+                    let barrel = new Barrel({ id: this.nextId(), pos: { x, y } })
+                    this.addEntity(barrel)
                 }
             }
         }
@@ -546,11 +479,36 @@ class Game {
 
 
     getBlockByPosition(x, y) {
-        let block = this.entities.find(block => ((block.pos.x === x) && (block.pos.y === y)))
-        return block
+        return this.entities.find(block => ((block.pos.x === x) && (block.pos.y === y)))
     }
 
     async finished() {
+
+        setTimeout(() => {
+            this.destroy()
+        }, 5000) // Self-destruct in 5 seconds
+    }
+
+    // Stop playing (game ended)
+    stop() {
+        this.running = false
+        clearInterval(this.interval)
+
+        this.connections()
+            .forEach(s => {
+                s.send(JSON.stringify({ type: 'game-stop', data: {} }))
+            })
+    }
+    announceWinner() {
+        let winner = this.players.find(p => p.diedAt === null)
+
+        if (winner) {
+            this.connections()
+                .forEach(socket => {
+                    socket.send(JSON.stringify({ type: 'winner', data: winner.username }))
+                })
+        }
+
         let players = this.players.sort((a, b) => a.diedAt < b.diedAt)
         players.forEach(async (player, index) => {
             let newGameScore = {
@@ -563,26 +521,14 @@ class Game {
             await GameScore.create(newGameScore)
         })
 
-        this.destroy()
-    }
-
-    // Stop playing (game ended)
-    stop() {
-        this.running = false
-        clearInterval(this.interval)
-        let winner = this.players.find(p => p.diedAt === null)
-        if(winner){
-            this.connections().forEach(socket => {
-                socket.send(JSON.stringify({ type: 'game-end', data: winner.username }))
-                this.leaveGame(socket)
-            })
-        }
+        setTimeout(() => {
+            this.stop()
+        }, 5000) // Stop after 5 seconds
     }
 
     // Kill game for garbage collector
     destroy() {
         this.stop()
-
     }
 
     getData() {

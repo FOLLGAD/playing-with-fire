@@ -15,6 +15,16 @@ const GameScore = require('./models/GameScore')
 
 const { Game } = require('./game')
 
+const readableGameId = (len = 8) => {
+    let alp = "abcdefghijklmnopqrstuvwxyz"
+
+    let id = ""
+    for (let i = 0; i < len; i++) {
+        id += alp[Math.random() * alp.length | 0]
+    }
+    return id
+}
+
 // Loads the options from the .env file into process.env.{SETTING}
 require('dotenv').config()
 
@@ -92,7 +102,6 @@ const wss = new WebSocket.Server({
 
                 next(true)
             } catch (error) {
-                console.log(error)
                 next(false)
             }
         })
@@ -140,7 +149,7 @@ wss.on('connection', (ws, req) => {
         } else if (type === 'game-info') {
             ws.send(JSON.stringify({ type: 'new-game', data: currentGame.getData() }))
         } else if (type === 'create-game') {
-            const gameid = uuid.v4()
+            const gameid = readableGameId()
             const game = new Game(gameid, ws)
 
             game.joinGame(ws)
@@ -164,38 +173,30 @@ wss.on('connection', (ws, req) => {
                     currentGame = null
                 }
 
-                let alreadyJoined = g.players.find(p => p.username === ws.username)
-
-                if (alreadyJoined) {
-                    // Override socket
-                    alreadyJoined.socket = ws
-                    currentGame = g
-                } else if (!currentGame) {
+                if (!currentGame) {
                     currentPlayer = g.joinGame(ws)
                 }
-                
+
                 currentGame = g
                 let gameData = currentGame.getData()
                 ws.send(JSON.stringify({
                     type: 'joined-game', data: {
-                        gamedata: gameData,
+                        players: gameData.players,
                         isHost: currentGame.host === ws,
                     }
                 }))
                 if (currentPlayer) {
-                    console.log(currentPlayer)
                     let sendData = JSON.stringify({
                         type: 'player-joined', data: [
-                            { username: currentPlayer.username, player: currentPlayer.id, diedAt: currentPlayer.diedAt }
+                            { username: currentPlayer.username },
                         ]
                     })
                     currentGame.players.forEach(p => p.socket && p.socket.send(sendData))
                 }
-                } else {
+            } else {
                 ws.send(JSON.stringify({ type: 'not-found' }))
             }
-    
-        } else if(type === "start-game") {
+        } else if (type === "start-game") {
             currentGame.start()
         } else if (type === 'leave-game') {
             leaveGame()
@@ -281,11 +282,9 @@ const auth = express.Router()
         res.json({})
     })
     .get('/games', authMiddleware, async (req, res) => {
-        console.log(games)
         res.status(200).json({ list: Array.from(games.values()).map(g => g.getData()) })
     })
     .get('/highscores', async (req, res) => {
-        console.log("Highscore access")
         await GameScore.findAll({
             attributes: ['username', [sequelize.fn('count', sequelize.col('username')), 'count']],
             group: ['gameScore.username'],
